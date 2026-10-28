@@ -1,4 +1,11 @@
-import { ConfiguracaoIa, PROMPT_SISTEMA_PADRAO, PROVEDORES_IA, ProvedorIa } from '../../domain/entities/ConfiguracaoIa';
+import {
+  BASE_URL_PADRAO,
+  ConfiguracaoIa,
+  normalizarBaseUrl,
+  PROMPT_SISTEMA_PADRAO,
+  PROVEDORES_IA,
+  ProvedorIa,
+} from '../../domain/entities/ConfiguracaoIa';
 import { ConfiguracaoIaRepository } from '../../domain/repositories/ConfiguracaoIaRepository';
 import { CatalogoModelos } from '../ports/CatalogoModelos';
 import { LlmProvider } from '../ports/LlmProvider';
@@ -49,6 +56,7 @@ export class GerenciadorIa implements ResolvedorProvedorIa {
       configurado: this.configuracao !== null,
       modo: provedor.modo,
       provedor: provedor.nome,
+      rotulo: this.configuracao?.rotulo ?? null,
       modelo: this.configuracao?.modelo ?? null,
       atualizadoEm: this.configuracao?.atualizadoEm ?? null,
       promptPadrao: PROMPT_SISTEMA_PADRAO,
@@ -60,19 +68,23 @@ export class GerenciadorIa implements ResolvedorProvedorIa {
     return this.configuracao ? this.configuracao.toPublico() : null;
   }
 
-  async listarModelos(provedor: ProvedorIa, apiKey: string): Promise<ModeloIaDTO[]> {
+  async listarModelos(
+    provedor: ProvedorIa,
+    baseUrl: string,
+    apiKey: string,
+  ): Promise<ModeloIaDTO[]> {
     if (!PROVEDORES_IA.includes(provedor)) {
       throw new ProvedorInvalidoError(
-        `Provedor "${provedor}" não suportado. Apenas LLMs: ${PROVEDORES_IA.join(', ')}.`,
+        `Adaptador "${provedor}" não suportado. Aceitos: ${PROVEDORES_IA.join(', ')}.`,
       );
     }
-    return this.opcoes.catalogo.listar(provedor, apiKey);
+    return this.opcoes.catalogo.listar(provedor, baseUrl, apiKey);
   }
 
   async salvar(input: SalvarConfiguracaoIaDTO): Promise<StatusIaDTO> {
     if (!PROVEDORES_IA.includes(input.provedor)) {
       throw new ProvedorInvalidoError(
-        `Provedor "${input.provedor}" não suportado. Apenas LLMs: ${PROVEDORES_IA.join(', ')}.`,
+        `Adaptador "${input.provedor}" não suportado. Aceitos: ${PROVEDORES_IA.join(', ')}.`,
       );
     }
 
@@ -81,21 +93,33 @@ export class GerenciadorIa implements ResolvedorProvedorIa {
       throw new ProvedorInvalidoError('Informe a chave de API do provedor.');
     }
 
-    // Valida a chave junto ao provedor — e já obtém a lista real de modelos.
-    const modelos = await this.listarModelos(input.provedor, apiKey);
+    // URL base: a informada ou a padrão do adaptador (OpenAI, DeepSeek, Groq...).
+    let baseUrl: string;
+    try {
+      baseUrl = input.baseUrl?.trim()
+        ? normalizarBaseUrl(input.baseUrl)
+        : BASE_URL_PADRAO[input.provedor];
+    } catch (erro) {
+      throw new ProvedorInvalidoError(
+        erro instanceof Error ? erro.message : 'URL base inválida.',
+      );
+    }
 
-    // Modelo é opcional: sem escolha explícita, usa o padrão "flash" do provedor,
+    // Valida a chave junto ao provedor — e já obtém a lista real de modelos.
+    const modelos = await this.listarModelos(input.provedor, baseUrl, apiKey);
+
+    // Modelo é opcional: sem escolha explícita, usa o padrão "flash" do adaptador,
     // preferindo um modelo que exista de fato na lista devolvida pela API.
     const modeloInformado = input.modelo?.trim();
     const modelo = modeloInformado || escolherModeloPadrao(input.provedor, modelos);
 
     if (modeloInformado && modelos.length > 0 && !modelos.some((m) => m.id === modelo)) {
       throw new ProvedorInvalidoError(
-        `O modelo "${modelo}" não está disponível para o provedor ${input.provedor}.`,
+        `O modelo "${modelo}" não está disponível em ${baseUrl}.`,
       );
     }
 
-    const configuracao = ConfiguracaoIa.criar({ ...input, apiKey, modelo });
+    const configuracao = ConfiguracaoIa.criar({ ...input, apiKey, baseUrl, modelo });
 
     await this.opcoes.repositorio.salvar(configuracao);
     this.configuracao = configuracao;

@@ -91,11 +91,16 @@ export const api = {
       });
     },
 
-    modelos(senha: string, provedor: ProvedorIa, apiKey: string): Promise<ModeloIa[]> {
+    modelos(
+      senha: string,
+      provedor: ProvedorIa,
+      baseUrl: string | undefined,
+      apiKey: string,
+    ): Promise<ModeloIa[]> {
       return requisitar<ModeloIa[]>('/api/ia/modelos', {
         method: 'POST',
         headers: comSenha(senha),
-        body: JSON.stringify({ senha, provedor, apiKey }),
+        body: JSON.stringify({ senha, provedor, baseUrl, apiKey }),
       });
     },
 

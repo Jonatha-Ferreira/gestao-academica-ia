@@ -184,7 +184,10 @@ No topo da tela há o painel **“Integrar IA real”**:
 
 1. **Senha de administração** (`IA_ADMIN_PASSWORD`) — a integração mexe com comunicação externa,
    então só é liberada após informar a senha correta.
-2. **Provedor** — apenas LLMs: **Anthropic (Claude)** ou **OpenAI (GPT)**.
+2. **Provedor** — um **preset** (Anthropic, OpenAI, DeepSeek, Groq, OpenRouter,
+   **Cohere/Command**, Mistral, Together, Ollama, LM Studio) **ou “Outro”** informando a **URL base**
+   da API. Qualquer serviço compatível com a API da OpenAI funciona — não ficamos presos a um
+   fornecedor.
 3. **Chave de API** — validada de verdade: o back-end chama `GET /v1/models` do provedor; chave
    inválida é recusada (`400 PROVEDOR_INVALIDO`).
 4. **Modelo (opcional)** — o botão **“Carregar modelos”** busca a lista **com base na LLM e na

@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { ConfiguracaoIa, MODELO_PADRAO, PROMPT_SISTEMA_PADRAO } from '../../src/domain/entities/ConfiguracaoIa';
+import {
+  BASE_URL_PADRAO,
+  ConfiguracaoIa,
+  MODELO_PADRAO,
+  PROMPT_SISTEMA_PADRAO,
+} from '../../src/domain/entities/ConfiguracaoIa';
 import { DomainError } from '../../src/domain/errors/DomainError';
 
 function base(overrides: Partial<Parameters<typeof ConfiguracaoIa.criar>[0]> = {}) {
@@ -26,6 +31,30 @@ describe('ConfiguracaoIa', () => {
 
     const openai = ConfiguracaoIa.criar({ provedor: 'openai', apiKey: 'chave-de-teste-openai', modelo: '   ' });
     expect(openai.modelo).toBe(MODELO_PADRAO.openai);
+  });
+
+  it('usa a URL base padrão e o rótulo do adaptador quando não informados', () => {
+    const config = ConfiguracaoIa.criar({ provedor: 'anthropic', apiKey: 'chave' });
+    expect(config.baseUrl).toBe(BASE_URL_PADRAO.anthropic);
+    expect(config.rotulo).toBe('Anthropic');
+  });
+
+  it('aceita URL base e rótulo personalizados (provedor genérico compatível)', () => {
+    const config = ConfiguracaoIa.criar({
+      provedor: 'openai',
+      rotulo: 'DeepSeek',
+      baseUrl: 'https://api.deepseek.com/v1/',
+      apiKey: 'chave',
+    });
+
+    expect(config.baseUrl).toBe('https://api.deepseek.com/v1');
+    expect(config.rotulo).toBe('DeepSeek');
+  });
+
+  it('rejeita URL base inválida', () => {
+    expect(() =>
+      ConfiguracaoIa.criar({ provedor: 'openai', baseUrl: 'nao-e-url', apiKey: 'chave' }),
+    ).toThrow(DomainError);
   });
 
   it('rejeita temperatura fora do intervalo 0..2', () => {

@@ -1,5 +1,5 @@
 import { LlmProvider } from '../../application/ports/LlmProvider';
-import { PROMPT_SISTEMA_PADRAO } from '../../domain/entities/ConfiguracaoIa';
+import { BASE_URL_PADRAO, PROMPT_SISTEMA_PADRAO } from '../../domain/entities/ConfiguracaoIa';
 import { AnthropicProvider } from './AnthropicProvider';
 import { OpenAiProvider } from './OpenAiProvider';
 import { DemoProvider } from './DemoProvider';
@@ -12,6 +12,9 @@ import { DemoProvider } from './DemoProvider';
  *   LLM_PROVIDER=openai    -> exige OPENAI_API_KEY
  *   LLM_PROVIDER=demo      -> respostas locais (sem rede)
  *   LLM_PROVIDER=auto/ausente -> anthropic, senão openai, senão demo
+ *
+ * As URLs base podem ser sobrescritas por ANTHROPIC_BASE_URL / OPENAI_BASE_URL
+ * (útil para gateways/proxies ou provedores compatíveis).
  */
 export function createLlmProvider(env: NodeJS.ProcessEnv = process.env): LlmProvider {
   const desejado = (env.LLM_PROVIDER ?? 'auto').toLowerCase().trim();
@@ -24,6 +27,7 @@ export function createLlmProvider(env: NodeJS.ProcessEnv = process.env): LlmProv
     }
     return new AnthropicProvider({
       apiKey: anthropicKey,
+      baseUrl: env.ANTHROPIC_BASE_URL || BASE_URL_PADRAO.anthropic,
       modelo: env.ANTHROPIC_MODEL,
       promptSistema: PROMPT_SISTEMA_PADRAO,
     });
@@ -35,6 +39,7 @@ export function createLlmProvider(env: NodeJS.ProcessEnv = process.env): LlmProv
     }
     return new OpenAiProvider({
       apiKey: openAiKey,
+      baseUrl: env.OPENAI_BASE_URL || BASE_URL_PADRAO.openai,
       modelo: env.OPENAI_MODEL,
       promptSistema: PROMPT_SISTEMA_PADRAO,
     });
@@ -47,6 +52,7 @@ export function createLlmProvider(env: NodeJS.ProcessEnv = process.env): LlmProv
   if (anthropicKey) {
     return new AnthropicProvider({
       apiKey: anthropicKey,
+      baseUrl: env.ANTHROPIC_BASE_URL || BASE_URL_PADRAO.anthropic,
       modelo: env.ANTHROPIC_MODEL,
       promptSistema: PROMPT_SISTEMA_PADRAO,
     });
@@ -54,6 +60,7 @@ export function createLlmProvider(env: NodeJS.ProcessEnv = process.env): LlmProv
   if (openAiKey) {
     return new OpenAiProvider({
       apiKey: openAiKey,
+      baseUrl: env.OPENAI_BASE_URL || BASE_URL_PADRAO.openai,
       modelo: env.OPENAI_MODEL,
       promptSistema: PROMPT_SISTEMA_PADRAO,
     });

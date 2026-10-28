@@ -10,6 +10,7 @@ export interface StatusIaDTO {
   configurado: boolean;
   modo: ModoLlm;
   provedor: string;
+  rotulo: string | null;
   modelo: string | null;
   atualizadoEm: string | null;
   promptPadrao: string;
@@ -17,6 +18,8 @@ export interface StatusIaDTO {
 
 export interface ConfiguracaoIaPublicaDTO {
   provedor: ProvedorIa;
+  rotulo: string;
+  baseUrl: string;
   modelo: string;
   promptSistema: string;
   temperatura: number;
@@ -26,8 +29,12 @@ export interface ConfiguracaoIaPublicaDTO {
 
 export interface SalvarConfiguracaoIaDTO {
   provedor: ProvedorIa;
+  /** Rótulo de exibição (ex.: "DeepSeek"). Opcional. */
+  rotulo?: string;
+  /** URL base da API, já com a versão (ex.: https://api.deepseek.com/v1). Opcional. */
+  baseUrl?: string;
   apiKey: string;
-  /** Opcional: sem ele, usa o modelo padrão do provedor. */
+  /** Opcional: sem ele, usa o modelo padrão do adaptador. */
   modelo?: string;
   promptSistema?: string;
   temperatura?: number;

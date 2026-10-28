@@ -348,7 +348,7 @@ button:disabled {
   gap: 12px;
 }
 
-.ia-barra button {
+.ia .ia-barra button {
   padding: 6px 12px;
   border: 1px solid var(--cor-primaria);
   border-radius: 8px;
@@ -444,28 +444,46 @@ button:disabled {
   margin-top: 4px;
 }
 
+.ia-base-url {
+  display: block;
+  margin-bottom: 12px;
+}
+
+.ia-base-url input {
+  width: 100%;
+  margin-top: 4px;
+}
+
+.ia-base-url .ia-nota {
+  display: block;
+  margin-top: 4px;
+}
+
 .ia-acoes {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
 }
 
-.ia-acoes button {
+/* Base de todos os botões do painel de IA (mesmo padrão visual) */
+.ia button {
   padding: 8px 14px;
-  border: none;
+  border: 1px solid transparent;
   border-radius: 8px;
   background: var(--cor-primaria);
   color: #fff;
+  font: inherit;
   cursor: pointer;
+  white-space: nowrap;
 }
 
-.ia-acoes button.secundario {
+.ia button.secundario {
   background: var(--cor-superficie);
   color: var(--cor-texto);
-  border: 1px solid var(--cor-borda);
+  border-color: var(--cor-borda);
 }
 
-.ia-acoes button.perigo {
+.ia button.perigo {
   background: var(--cor-alerta);
 }
 

@@ -8,9 +8,23 @@ interface Props {
   onAtualizarStatus: () => void;
 }
 
-const PROVEDORES: Array<{ valor: ProvedorIa; rotulo: string }> = [
-  { valor: 'anthropic', rotulo: 'Anthropic (Claude)' },
-  { valor: 'openai', rotulo: 'OpenAI (GPT)' },
+/**
+ * Opções do seletor de provedor. `provedor` é o ADAPTADOR de API e `baseUrl` é o
+ * endereço do serviço — é isso que permite usar qualquer provedor compatível com
+ * a API da OpenAI (DeepSeek, Groq, OpenRouter, Cohere/Command, Mistral, Ollama...).
+ */
+const PRESETS: Array<{ id: string; nome: string; provedor: ProvedorIa; baseUrl: string }> = [
+  { id: 'anthropic', nome: 'Anthropic (Claude)', provedor: 'anthropic', baseUrl: 'https://api.anthropic.com/v1' },
+  { id: 'openai', nome: 'OpenAI (GPT)', provedor: 'openai', baseUrl: 'https://api.openai.com/v1' },
+  { id: 'deepseek', nome: 'DeepSeek', provedor: 'openai', baseUrl: 'https://api.deepseek.com/v1' },
+  { id: 'groq', nome: 'Groq', provedor: 'openai', baseUrl: 'https://api.groq.com/openai/v1' },
+  { id: 'openrouter', nome: 'OpenRouter', provedor: 'openai', baseUrl: 'https://openrouter.ai/api/v1' },
+  { id: 'cohere', nome: 'Cohere (Command)', provedor: 'openai', baseUrl: 'https://api.cohere.ai/compatibility/v1' },
+  { id: 'mistral', nome: 'Mistral', provedor: 'openai', baseUrl: 'https://api.mistral.ai/v1' },
+  { id: 'together', nome: 'Together AI', provedor: 'openai', baseUrl: 'https://api.together.xyz/v1' },
+  { id: 'ollama', nome: 'Ollama (local)', provedor: 'openai', baseUrl: 'http://localhost:11434/v1' },
+  { id: 'lmstudio', nome: 'LM Studio (local)', provedor: 'openai', baseUrl: 'http://localhost:1234/v1' },
+  { id: 'custom', nome: 'Outro (compatível com OpenAI)', provedor: 'openai', baseUrl: '' },
 ];
 
 export function ConfiguracaoIa({ status, onAtualizarStatus }: Props) {
@@ -21,7 +35,10 @@ export function ConfiguracaoIa({ status, onAtualizarStatus }: Props) {
   const [erroSenha, setErroSenha] = useState<string | null>(null);
   const [autenticando, setAutenticando] = useState(false);
 
+  const [presetId, setPresetId] = useState('anthropic');
   const [provedor, setProvedor] = useState<ProvedorIa>('anthropic');
+  const [rotulo, setRotulo] = useState('Anthropic (Claude)');
+  const [baseUrl, setBaseUrl] = useState('https://api.anthropic.com/v1');
   const [apiKey, setApiKey] = useState('');
   const [modelo, setModelo] = useState('');
   const [modelos, setModelos] = useState<ModeloIa[]>([]);
@@ -41,16 +58,20 @@ export function ConfiguracaoIa({ status, onAtualizarStatus }: Props) {
     api.ia
       .configuracao(senha)
       .then((config) => {
-        if (!ativo) return;
-        if (config) {
-          setProvedor(config.provedor);
-          setModelo(config.modelo);
-          setPromptSistema(config.promptSistema);
-          setTemperatura(config.temperatura);
-          setMaxTokens(config.maxTokens);
-        } else if (status) {
-          setPromptSistema(status.promptPadrao);
+        if (!ativo || !config) {
+          return;
         }
+        const preset = PRESETS.find(
+          (item) => item.provedor === config.provedor && item.baseUrl === config.baseUrl,
+        );
+        setPresetId(preset?.id ?? 'custom');
+        setProvedor(config.provedor);
+        setRotulo(config.rotulo);
+        setBaseUrl(config.baseUrl);
+        setModelo(config.modelo);
+        setPromptSistema(config.promptSistema);
+        setTemperatura(config.temperatura);
+        setMaxTokens(config.maxTokens);
       })
       .catch(() => undefined);
     return () => {
@@ -58,6 +79,18 @@ export function ConfiguracaoIa({ status, onAtualizarStatus }: Props) {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autenticado]);
+
+  function selecionarPreset(id: string) {
+    const preset = PRESETS.find((item) => item.id === id);
+    if (!preset) {
+      return;
+    }
+    setPresetId(id);
+    setProvedor(preset.provedor);
+    setRotulo(preset.nome);
+    setBaseUrl(preset.baseUrl);
+    setModelos([]);
+  }
 
   async function autenticar(evento: FormEvent) {
     evento.preventDefault();
@@ -78,12 +111,16 @@ export function ConfiguracaoIa({ status, onAtualizarStatus }: Props) {
     setMensagem(null);
     setOcupado(true);
     try {
-      const lista = await api.ia.modelos(senha, provedor, apiKey);
+      const lista = await api.ia.modelos(senha, provedor, baseUrl.trim() || undefined, apiKey);
       setModelos(lista);
       if (!modelo && lista.length > 0) {
         setModelo(lista[0]!.id);
       }
-      setMensagem(`${lista.length} modelo(s) disponíveis para ${provedor}.`);
+      setMensagem(
+        lista.length > 0
+          ? `${lista.length} modelo(s) disponíveis em ${baseUrl}.`
+          : `O provedor em ${baseUrl} não expôs uma lista de modelos — informe o nome do modelo.`,
+      );
     } catch (falha) {
       setErro(falha instanceof Error ? falha.message : 'Falha ao carregar modelos.');
     } finally {
@@ -98,6 +135,8 @@ export function ConfiguracaoIa({ status, onAtualizarStatus }: Props) {
     try {
       const novoStatus = await api.ia.salvar(senha, {
         provedor,
+        rotulo,
+        baseUrl: baseUrl.trim() || undefined,
         apiKey,
         modelo: modelo.trim() || undefined,
         promptSistema,
@@ -144,6 +183,7 @@ export function ConfiguracaoIa({ status, onAtualizarStatus }: Props) {
   }
 
   const modo = status?.modo ?? 'demonstrativo';
+  const podeCarregar = Boolean(apiKey.trim());
 
   return (
     <section className="ia">
@@ -154,7 +194,7 @@ export function ConfiguracaoIa({ status, onAtualizarStatus }: Props) {
           {status?.configurado && (
             <span className="ia-detalhe">
               {' '}
-              {status.provedor}
+              {status.rotulo ?? status.provedor}
               {status.modelo ? ` · ${status.modelo}` : ''}
             </span>
           )}
@@ -191,17 +231,11 @@ export function ConfiguracaoIa({ status, onAtualizarStatus }: Props) {
             <div className="ia-form">
               <div className="ia-campos">
                 <label>
-                  Provedor de LLM
-                  <select
-                    value={provedor}
-                    onChange={(evento) => {
-                      setProvedor(evento.target.value as ProvedorIa);
-                      setModelos([]);
-                    }}
-                  >
-                    {PROVEDORES.map((item) => (
-                      <option key={item.valor} value={item.valor}>
-                        {item.rotulo}
+                  Provedor
+                  <select value={presetId} onChange={(evento) => selecionarPreset(evento.target.value)}>
+                    {PRESETS.map((item) => (
+                      <option key={item.id} value={item.id}>
+                        {item.nome}
                       </option>
                     ))}
                   </select>
@@ -217,7 +251,32 @@ export function ConfiguracaoIa({ status, onAtualizarStatus }: Props) {
                     autoComplete="off"
                   />
                 </label>
+              </div>
 
+              <label className="ia-base-url">
+                URL base da API
+                <input
+                  type="text"
+                  value={baseUrl}
+                  onChange={(evento) => {
+                    setBaseUrl(evento.target.value);
+                    // Editar a URL manualmente = provedor personalizado, que no
+                    // nosso caso é sempre compatível com a API da OpenAI.
+                    setPresetId('custom');
+                    setProvedor('openai');
+                    setRotulo('Personalizado');
+                    setModelos([]);
+                  }}
+                  placeholder="https://api.exemplo.com/v1"
+                  spellCheck={false}
+                />
+                <span className="ia-nota">
+                  Endereço da API, já com a versão. Qualquer serviço compatível com a API da OpenAI
+                  funciona (DeepSeek, Groq, OpenRouter, Cohere/Command, Mistral, Ollama...).
+                </span>
+              </label>
+
+              <div className="ia-campos">
                 <label>
                   Modelo (opcional)
                   <div className="linha">
@@ -227,11 +286,15 @@ export function ConfiguracaoIa({ status, onAtualizarStatus }: Props) {
                       onChange={(evento) => setModelo(evento.target.value)}
                       placeholder="Se vazio, usa o padrão do provedor"
                     />
-                    <button type="button" onClick={carregarModelos} disabled={ocupado || !apiKey.trim()}>
+                    <button
+                      type="button"
+                      className="secundario"
+                      onClick={carregarModelos}
+                      disabled={ocupado || !podeCarregar}
+                    >
                       Carregar modelos
                     </button>
                   </div>
-                  <span className="ia-nota">Os modelos são consultados no provedor usando a sua chave.</span>
                   <datalist id="lista-modelos">
                     {modelos.map((item) => (
                       <option key={item.id} value={item.id}>
@@ -276,7 +339,7 @@ export function ConfiguracaoIa({ status, onAtualizarStatus }: Props) {
               </label>
 
               <div className="ia-acoes">
-                <button type="button" onClick={salvar} disabled={ocupado || !apiKey.trim()}>
+                <button type="button" onClick={salvar} disabled={ocupado || !podeCarregar}>
                   Salvar integração
                 </button>
                 <button type="button" className="secundario" onClick={testar} disabled={ocupado}>
@@ -299,7 +362,7 @@ export function ConfiguracaoIa({ status, onAtualizarStatus }: Props) {
                 </button>
               </div>
 
-              {!apiKey.trim() ? (
+              {!podeCarregar ? (
                 <p className="ia-nota">Informe a chave de API para salvar a integração.</p>
               ) : !modelo.trim() ? (
                 <p className="ia-nota">

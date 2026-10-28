@@ -1,4 +1,4 @@
-import { ProvedorIa } from '../../domain/entities/ConfiguracaoIa';
+import { ProvedorIa, normalizarBaseUrl } from '../../domain/entities/ConfiguracaoIa';
 import { CatalogoModelos } from '../../application/ports/CatalogoModelos';
 import { ModeloIaDTO } from '../../application/dtos/ia.dto';
 import { ProvedorInvalidoError } from '../../application/errors/AppError';
@@ -44,81 +44,111 @@ export function ehModeloLlmOpenAi(id: string): boolean {
   return PREFIXOS_LLM_OPENAI.some((prefixo) => alvo.startsWith(prefixo));
 }
 
-async function buscarJson(
+interface RespostaBusca {
+  status: number;
+  dados: unknown;
+}
+
+/** GET com timeout. Lança somente em falha de rede/timeout. */
+async function obterJson(
   url: string,
   headers: Record<string, string>,
   fetchImpl: typeof fetch,
-): Promise<unknown> {
+): Promise<RespostaBusca> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 20000);
   try {
-    const resposta = await fetchImpl(url, {
-      method: 'GET',
-      headers,
-      signal: controller.signal,
-    });
+    const resposta = await fetchImpl(url, { method: 'GET', headers, signal: controller.signal });
     const texto = await resposta.text();
-    if (!resposta.ok) {
-      throw new ProvedorInvalidoError(
-        `O provedor recusou a requisição (HTTP ${resposta.status}). Verifique a chave de API.`,
-      );
+    let dados: unknown = null;
+    try {
+      dados = texto ? JSON.parse(texto) : null;
+    } catch {
+      dados = null;
     }
-    return JSON.parse(texto);
+    return { status: resposta.status, dados };
   } catch (erro) {
-    if (erro instanceof ProvedorInvalidoError) {
-      throw erro;
-    }
     const motivo = erro instanceof Error ? erro.message : String(erro);
-    throw new ProvedorInvalidoError(`Não foi possível validar a chave junto ao provedor: ${motivo}`);
+    throw new ProvedorInvalidoError(`Não foi possível contatar ${url}: ${motivo}`);
   } finally {
     clearTimeout(timer);
   }
 }
 
 /**
- * Catálogo real: consulta `GET /v1/models` do provedor com a chave informada.
- * Uma chave inválida provoca erro (a integração é recusada).
+ * Catálogo real: consulta `GET {baseUrl}/models` do provedor com a chave
+ * informada. Serve também como validação da chave.
  */
 export class CatalogoModelosHttp implements CatalogoModelos {
   constructor(private readonly fetchImpl: typeof fetch = fetch) {}
 
-  async listar(provedor: ProvedorIa, apiKey: string): Promise<ModeloIaDTO[]> {
+  async listar(provedor: ProvedorIa, baseUrl: string, apiKey: string): Promise<ModeloIaDTO[]> {
+    const base = normalizarBaseUrl(baseUrl);
+
     if (provedor === 'anthropic') {
-      return this.listarAnthropic(apiKey);
+      return this.listarAnthropic(base, apiKey);
     }
     if (provedor === 'openai') {
-      return this.listarOpenAi(apiKey);
+      return this.listarCompativelOpenAi(base, apiKey);
     }
-    throw new ProvedorInvalidoError(`Provedor "${provedor}" não suportado. Apenas LLMs.`);
+    throw new ProvedorInvalidoError(`Adaptador "${provedor}" não suportado.`);
   }
 
-  private async listarAnthropic(apiKey: string): Promise<ModeloIaDTO[]> {
-    const dados = (await buscarJson(
-      'https://api.anthropic.com/v1/models?limit=100',
+  private async listarAnthropic(base: string, apiKey: string): Promise<ModeloIaDTO[]> {
+    const { status, dados } = await obterJson(
+      `${base}/models?limit=100`,
       { 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
       this.fetchImpl,
-    )) as { data?: Array<{ id?: string; display_name?: string }> };
+    );
 
-    const modelos = (dados.data ?? [])
+    if (status === 401 || status === 403) {
+      throw new ProvedorInvalidoError(`A Anthropic recusou a chave de API (HTTP ${status}).`);
+    }
+    if (status < 200 || status >= 300) {
+      throw new ProvedorInvalidoError(`A Anthropic respondeu HTTP ${status} ao listar modelos.`);
+    }
+
+    const modelos = ((dados as { data?: Array<{ id?: string; display_name?: string }> })?.data ?? [])
       .filter((modelo) => Boolean(modelo.id))
-      .map((modelo) => ({ id: modelo.id as string, nome: modelo.display_name ?? (modelo.id as string) }));
+      .map((modelo) => ({
+        id: modelo.id as string,
+        nome: modelo.display_name ?? (modelo.id as string),
+      }));
 
     return modelos.length > 0 ? modelos : MODELOS_FALLBACK.anthropic;
   }
 
-  private async listarOpenAi(apiKey: string): Promise<ModeloIaDTO[]> {
-    const dados = (await buscarJson(
-      'https://api.openai.com/v1/models',
+  private async listarCompativelOpenAi(base: string, apiKey: string): Promise<ModeloIaDTO[]> {
+    const ehOpenAiOficial = new URL(base).host === 'api.openai.com';
+    const { status, dados } = await obterJson(
+      `${base}/models`,
       { authorization: `Bearer ${apiKey}` },
       this.fetchImpl,
-    )) as { data?: Array<{ id?: string }> };
+    );
 
-    const modelos = (dados.data ?? [])
+    if (status === 401 || status === 403) {
+      throw new ProvedorInvalidoError(`O provedor recusou a chave de API (HTTP ${status}).`);
+    }
+
+    // Alguns serviços compatíveis não expõem /models. Nesse caso não bloqueamos a
+    // integração: o usuário informa o nome do modelo manualmente.
+    if (status === 404 || status === 405 || status === 501) {
+      return ehOpenAiOficial ? MODELOS_FALLBACK.openai : [];
+    }
+    if (status < 200 || status >= 300) {
+      throw new ProvedorInvalidoError(
+        `O provedor respondeu HTTP ${status} ao listar modelos em ${base}/models.`,
+      );
+    }
+
+    const ids = (((dados as { data?: Array<{ id?: string }> })?.data) ?? [])
       .map((modelo) => modelo.id ?? '')
-      .filter((id) => ehModeloLlmOpenAi(id))
-      .sort()
-      .map((id) => ({ id, nome: id }));
+      .filter((id) => id.length > 0);
 
-    return modelos.length > 0 ? modelos : MODELOS_FALLBACK.openai;
+    // O catálogo da OpenAI oficial vem "poluído" (embeddings, tts, imagem...).
+    // Nos demais provedores compatíveis não filtramos, pois os nomes variam.
+    const selecionados = (ehOpenAiOficial ? ids.filter(ehModeloLlmOpenAi) : ids).sort();
+
+    return selecionados.map((id) => ({ id, nome: id }));
   }
 }

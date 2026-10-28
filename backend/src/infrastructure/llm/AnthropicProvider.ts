@@ -1,11 +1,17 @@
 import { EntradaLlm, LlmProvider, ModoLlm } from '../../application/ports/LlmProvider';
 import { LlmIndisponivelError } from '../../application/errors/AppError';
-import { MODELO_PADRAO, PROMPT_SISTEMA_PADRAO } from '../../domain/entities/ConfiguracaoIa';
+import {
+  BASE_URL_PADRAO,
+  MODELO_PADRAO,
+  PROMPT_SISTEMA_PADRAO,
+} from '../../domain/entities/ConfiguracaoIa';
 import { postJson } from './http';
 import { montarMensagemUsuario, serializarContexto } from './prompts';
 
 export interface OpcoesProvedorIa {
   apiKey: string;
+  /** URL base da API, já com a versão (ex.: https://api.deepseek.com/v1). */
+  baseUrl?: string;
   modelo?: string;
   promptSistema?: string;
   temperatura?: number;
@@ -17,7 +23,7 @@ interface RespostaAnthropic {
 }
 
 /**
- * Adapter real do Claude (Anthropic Messages API).
+ * Adapter da API nativa da Anthropic (Messages API).
  * O prompt de sistema é enviado como bloco com `cache_control` para aproveitar
  * o prompt caching do provedor.
  */
@@ -25,12 +31,14 @@ export class AnthropicProvider implements LlmProvider {
   readonly nome = 'anthropic';
   readonly modo: ModoLlm = 'real';
 
+  private readonly baseUrl: string;
   private readonly modelo: string;
   private readonly promptSistema: string;
   private readonly temperatura: number;
   private readonly maxTokens: number;
 
   constructor(private readonly opcoes: OpcoesProvedorIa) {
+    this.baseUrl = (opcoes.baseUrl?.trim() || BASE_URL_PADRAO.anthropic).replace(/\/+$/, '');
     this.modelo = opcoes.modelo?.trim() || MODELO_PADRAO.anthropic;
     this.promptSistema = opcoes.promptSistema?.trim() || PROMPT_SISTEMA_PADRAO;
     // A Anthropic aceita temperatura entre 0 e 1.
@@ -40,7 +48,7 @@ export class AnthropicProvider implements LlmProvider {
 
   async responder({ pergunta, contexto }: EntradaLlm): Promise<string> {
     const dados = await postJson<RespostaAnthropic>(
-      'https://api.anthropic.com/v1/messages',
+      `${this.baseUrl}/messages`,
       {
         'x-api-key': this.opcoes.apiKey,
         'anthropic-version': '2023-06-01',

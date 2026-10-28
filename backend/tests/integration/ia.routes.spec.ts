@@ -173,6 +173,32 @@ describe('PUT /api/ia/configuracao', () => {
     expect(resposta.body.dados.modelo).toBe('claude-3-5-sonnet-latest');
   });
 
+  it('salva provedor genérico com URL base e rótulo personalizados', async () => {
+    const app = criarApp();
+
+    const resposta = await request(app).put('/api/ia/configuracao').send({
+      senha: SENHA,
+      provedor: 'openai',
+      rotulo: 'DeepSeek',
+      baseUrl: 'https://api.deepseek.com/v1',
+      apiKey: 'chave-de-teste',
+    });
+
+    expect(resposta.status).toBe(200);
+
+    const config = await request(app).get('/api/ia/configuracao').set('x-senha-ia', SENHA);
+    expect(config.body.dados.rotulo).toBe('DeepSeek');
+    expect(config.body.dados.baseUrl).toBe('https://api.deepseek.com/v1');
+  });
+
+  it('recusa URL base inválida', async () => {
+    const resposta = await request(criarApp())
+      .put('/api/ia/configuracao')
+      .send({ senha: SENHA, provedor: 'openai', baseUrl: 'nao-e-url', apiKey: 'chave' });
+
+    expect(resposta.status).toBe(400);
+  });
+
   it('recusa provedor não suportado', async () => {
     const resposta = await request(criarApp())
       .put('/api/ia/configuracao')

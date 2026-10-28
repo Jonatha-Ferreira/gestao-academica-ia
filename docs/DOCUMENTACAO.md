@@ -234,7 +234,10 @@ demonstrado.
 
 Painel "Integrar IA real" (protegido por senha `IA_ADMIN_PASSWORD`):
 
-- **Provedor**: apenas LLMs — Anthropic ou OpenAI (validação na borda por `z.enum` **e** no domínio).
+- **Provedor**: um **preset** (Anthropic, OpenAI, DeepSeek, Groq, OpenRouter, Cohere/Command,
+  Mistral, Together, Ollama, LM Studio) **ou a URL base livre** de qualquer serviço compatível com a
+  API da OpenAI. O que muda o comportamento é o **adaptador** (`anthropic` | `openai`), validado na
+  borda (`z.enum`) e no domínio; a URL base é validada por `normalizarBaseUrl`.
 - **Chave**: validada de verdade chamando `GET /v1/models` do provedor; chave inválida → `400`.
 - **Modelo (opcional)**: a lista é carregada **com base na LLM/key** (OpenAI filtra só modelos de
   chat; Anthropic usa `display_name`). **Sem escolha explícita, aplica-se o padrão do provedor** — a

@@ -7,6 +7,7 @@ import { OpenAiProvider } from './OpenAiProvider';
 export function montarProvedorIa(configuracao: ConfiguracaoIa): LlmProvider {
   const opcoes: OpcoesProvedorIa = {
     apiKey: configuracao.apiKey,
+    baseUrl: configuracao.baseUrl,
     modelo: configuracao.modelo,
     promptSistema: configuracao.promptSistema,
     temperatura: configuracao.temperatura,

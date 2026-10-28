@@ -32,8 +32,8 @@ export class IaController {
 
   /** POST /api/ia/modelos (protegido) — lista os modelos do provedor via chave. */
   listarModelos = asyncHandler(async (req: Request, res: Response) => {
-    const { provedor, apiKey } = modelosIaSchema.parse(req.body);
-    res.json({ dados: await this.gerenciadorIa.listarModelos(provedor, apiKey) });
+    const { provedor, baseUrl, apiKey } = modelosIaSchema.parse(req.body);
+    res.json({ dados: await this.gerenciadorIa.listarModelos(provedor, baseUrl ?? '', apiKey) });
   });
 
   /** PUT /api/ia/configuracao (protegido) — valida e salva a integração. */
