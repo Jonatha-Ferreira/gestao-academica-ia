@@ -106,7 +106,7 @@ export default function App() {
       <ConfiguracaoIa status={statusIa} onAtualizarStatus={atualizarStatusIa} />
 
       <main className="layout">
-        <section className="coluna">
+        <section className="coluna coluna-lista">
           <BuscaAlunos valor={busca} onMudar={setBusca} />
           <ListaAlunos
             alunos={alunos}
@@ -117,11 +117,11 @@ export default function App() {
           />
         </section>
 
-        <section className="coluna">
+        <section className="coluna coluna-detalhe">
           <DetalheAluno detalhe={detalhe} carregando={carregandoDetalhe} erro={erroDetalhe} />
         </section>
 
-        <section className="coluna">
+        <section className="coluna coluna-chat">
           <ChatAssistente alunoSelecionado={detalhe} />
         </section>
       </main>

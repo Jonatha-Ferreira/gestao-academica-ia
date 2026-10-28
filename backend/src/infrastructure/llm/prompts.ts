@@ -1,9 +1,11 @@
 import { ContextoAcademico } from '../../application/dtos/contexto.dto';
+import { formatarCompetenciaBR, formatarDataBR } from '../../shared/date';
+import { formatarMoedaBR } from '../../shared/money';
 
 /** Serializa o contexto em texto compacto e legível para o modelo. */
 export function serializarContexto(contexto: ContextoAcademico): string {
   const linhas: string[] = [
-    `Data de referência: ${contexto.dataReferencia}`,
+    `Data de referência: ${formatarDataBR(contexto.dataReferencia)}`,
     `Total de alunos: ${contexto.totalAlunos}`,
     '',
   ];
@@ -16,11 +18,16 @@ export function serializarContexto(contexto: ContextoAcademico): string {
       `- Parcelas: pagas=${aluno.resumo.parcelasPagas}, em aberto=${aluno.resumo.parcelasEmAberto}, em atraso=${aluno.resumo.parcelasEmAtraso}`,
     );
     linhas.push(
-      `- Valores: em aberto=R$ ${aluno.resumo.valorEmAberto.toFixed(2)}, em atraso=R$ ${aluno.resumo.valorEmAtraso.toFixed(2)}`,
+      `- Valores: em aberto=${formatarMoedaBR(aluno.resumo.valorEmAberto)}, em atraso=${formatarMoedaBR(aluno.resumo.valorEmAtraso)}`,
     );
-    linhas.push(`- Próximo vencimento: ${aluno.resumo.proximoVencimento ?? 'nenhum'}`);
+    linhas.push(
+      `- Próximo vencimento: ${aluno.resumo.proximoVencimento ? formatarDataBR(aluno.resumo.proximoVencimento) : 'nenhum'}`,
+    );
     const mensalidades = aluno.mensalidades
-      .map((m) => `${m.competencia} (venc ${m.vencimento}, R$ ${m.valor.toFixed(2)}, ${m.situacao})`)
+      .map(
+        (m) =>
+          `${formatarCompetenciaBR(m.competencia)} (venc ${formatarDataBR(m.vencimento)}, ${formatarMoedaBR(m.valor)}, ${m.situacao})`,
+      )
       .join('; ');
     linhas.push(`- Mensalidades: ${mensalidades}`);
     linhas.push('');

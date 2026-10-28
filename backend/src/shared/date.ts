@@ -16,3 +16,21 @@ export function dataISOHoje(agora: Date = new Date()): string {
 export function ehDataISO(valor: string): boolean {
   return /^\d{4}-\d{2}-\d{2}$/.test(valor);
 }
+
+/** Converte uma data ISO (YYYY-MM-DD) para o formato brasileiro (DD/MM/YYYY). */
+export function formatarDataBR(dataISO: string): string {
+  const partes = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dataISO);
+  if (!partes) {
+    return dataISO;
+  }
+  return `${partes[3]}/${partes[2]}/${partes[1]}`;
+}
+
+/** Converte uma competência ISO (YYYY-MM) para o formato brasileiro (MM/YYYY). */
+export function formatarCompetenciaBR(competencia: string): string {
+  const partes = /^(\d{4})-(\d{2})$/.exec(competencia);
+  if (!partes) {
+    return competencia;
+  }
+  return `${partes[2]}/${partes[1]}`;
+}

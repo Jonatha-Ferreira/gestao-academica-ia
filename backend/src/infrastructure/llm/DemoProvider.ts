@@ -1,5 +1,7 @@
 import { EntradaLlm, LlmProvider, ModoLlm } from '../../application/ports/LlmProvider';
 import { AlunoContexto, ContextoAcademico } from '../../application/dtos/contexto.dto';
+import { formatarDataBR } from '../../shared/date';
+import { formatarMoedaBR } from '../../shared/money';
 
 function normalizar(texto: string): string {
   return texto
@@ -16,8 +18,8 @@ function resumoAluno(a: AlunoContexto): string {
   return (
     `${a.nome} (matrícula ${a.matricula}, curso ${a.curso}, situação da matrícula: ${a.status}) está ${a.situacaoFinanceira}. ` +
     `Parcelas pagas: ${a.resumo.parcelasPagas}; em aberto: ${a.resumo.parcelasEmAberto}; em atraso: ${a.resumo.parcelasEmAtraso}. ` +
-    `Valor em aberto: R$ ${a.resumo.valorEmAberto.toFixed(2)}; em atraso: R$ ${a.resumo.valorEmAtraso.toFixed(2)}. ` +
-    `Próximo vencimento: ${a.resumo.proximoVencimento ?? 'nenhum'}.`
+    `Valor em aberto: ${formatarMoedaBR(a.resumo.valorEmAberto)}; em atraso: ${formatarMoedaBR(a.resumo.valorEmAtraso)}. ` +
+    `Próximo vencimento: ${a.resumo.proximoVencimento ? formatarDataBR(a.resumo.proximoVencimento) : 'nenhum'}.`
   );
 }
 
@@ -68,7 +70,7 @@ export function responderLocalmente(pergunta: string, contexto: ContextoAcademic
     const totalAtraso = inadimplentes.reduce((soma, a) => soma + a.resumo.valorEmAtraso, 0);
     return (
       `Alunos inadimplentes (${inadimplentes.length}):\n${descreverLista(inadimplentes)}\n` +
-      `Valor total em atraso: R$ ${totalAtraso.toFixed(2)}.`
+      `Valor total em atraso: ${formatarMoedaBR(totalAtraso)}.`
     );
   }
 
@@ -96,9 +98,9 @@ export function responderLocalmente(pergunta: string, contexto: ContextoAcademic
   if (/resum|panorama|visao geral|geral/.test(p)) {
     const totalAtraso = inadimplentes.reduce((soma, a) => soma + a.resumo.valorEmAtraso, 0);
     const base =
-      `Panorama acadêmico (data de referência ${contexto.dataReferencia}): ${alunos.length} alunos; ` +
+      `Panorama acadêmico (data de referência ${formatarDataBR(contexto.dataReferencia)}): ${alunos.length} alunos; ` +
       `${inadimplentes.length} inadimplente(s) e ${adimplentes.length} adimplente(s); ` +
-      `valor total em atraso R$ ${totalAtraso.toFixed(2)}.`;
+      `valor total em atraso ${formatarMoedaBR(totalAtraso)}.`;
     return inadimplentes.length > 0
       ? `${base}\nInadimplentes:\n${descreverLista(inadimplentes)}`
       : base;

@@ -290,6 +290,11 @@ npm test          # executa tudo
 - **Front-end sem biblioteca de estado:** `useState`/`useEffect` bastam para o escopo; busca com
   *debounce* e estados de **loading/erro** explícitos.
 - **Workspaces npm:** um `npm install` na raiz resolve back-end e front-end.
+- **Formatação pt-BR na borda:** a API trafega datas em ISO (ideal para máquina) e o front-end as
+  exibe como `DD/MM/YYYY` (competência `MM/YYYY`); valores monetários em `R$` no padrão brasileiro.
+  Os textos enviados ao modelo e as respostas do modo demonstrativo também usam o formato brasileiro.
+- **Layout responsivo:** grid com 3 colunas no desktop, 2 no tablet (≤1100px) e 1 no celular
+  (≤760px); a tabela de parcelas ganha rolagem horizontal em telas estreitas.
 
 ---
 

@@ -1,9 +1,5 @@
 import type { ResumoFinanceiro } from '../types';
-
-const moeda = (valor: number) =>
-  valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-
-const deCentavos = (centavos: number) => moeda(centavos / 100);
+import { formatarCentavos, formatarCompetencia, formatarData, formatarMoeda } from '../utils/formato';
 
 export function FinanceiroPanel({ resumo }: { resumo: ResumoFinanceiro }) {
   return (
@@ -20,38 +16,41 @@ export function FinanceiroPanel({ resumo }: { resumo: ResumoFinanceiro }) {
           Em atraso: <strong>{resumo.parcelasEmAtraso}</strong>
         </li>
         <li>
-          Valor em aberto: <strong>{deCentavos(resumo.valorEmAbertoEmCentavos)}</strong>
+          Valor em aberto: <strong>{formatarCentavos(resumo.valorEmAbertoEmCentavos)}</strong>
         </li>
         <li>
-          Valor em atraso: <strong>{deCentavos(resumo.valorEmAtrasoEmCentavos)}</strong>
+          Valor em atraso: <strong>{formatarCentavos(resumo.valorEmAtrasoEmCentavos)}</strong>
         </li>
         <li>
-          Próximo vencimento: <strong>{resumo.proximoVencimento ?? '—'}</strong>
+          Próximo vencimento:{' '}
+          <strong>{formatarData(resumo.proximoVencimento)}</strong>
         </li>
       </ul>
 
-      <table className="tabela-parcelas">
-        <thead>
-          <tr>
-            <th>Competência</th>
-            <th>Vencimento</th>
-            <th>Valor</th>
-            <th>Situação</th>
-          </tr>
-        </thead>
-        <tbody>
-          {resumo.parcelas.map((parcela) => (
-            <tr key={parcela.id}>
-              <td>{parcela.competencia}</td>
-              <td>{parcela.vencimento}</td>
-              <td>{moeda(parcela.valor)}</td>
-              <td>
-                <span className={`badge ${parcela.situacao}`}>{parcela.situacao}</span>
-              </td>
+      <div className="tabela-wrapper">
+        <table className="tabela-parcelas">
+          <thead>
+            <tr>
+              <th>Competência</th>
+              <th>Vencimento</th>
+              <th>Valor</th>
+              <th>Situação</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {resumo.parcelas.map((parcela) => (
+              <tr key={parcela.id}>
+                <td>{formatarCompetencia(parcela.competencia)}</td>
+                <td>{formatarData(parcela.vencimento)}</td>
+                <td>{formatarMoeda(parcela.valor)}</td>
+                <td>
+                  <span className={`badge ${parcela.situacao}`}>{parcela.situacao}</span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </section>
   );
 }

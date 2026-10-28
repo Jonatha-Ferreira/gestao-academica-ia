@@ -47,9 +47,25 @@ body {
   align-items: start;
 }
 
-@media (max-width: 1000px) {
+/* Tablet: lista + detalhe lado a lado; chat ocupa a largura toda. */
+@media (max-width: 1100px) {
+  .layout {
+    grid-template-columns: minmax(0, 300px) minmax(0, 1fr);
+  }
+
+  .coluna-chat {
+    grid-column: 1 / -1;
+  }
+}
+
+/* Celular: uma única coluna. */
+@media (max-width: 760px) {
   .layout {
     grid-template-columns: 1fr;
+  }
+
+  .coluna-chat {
+    grid-column: auto;
   }
 }
 
@@ -184,8 +200,19 @@ input[type='text'],
   font-size: 0.9rem;
 }
 
+.totais strong {
+  white-space: nowrap;
+}
+
+.tabela-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 .tabela-parcelas {
   width: 100%;
+  min-width: 380px;
   border-collapse: collapse;
   font-size: 0.85rem;
 }
@@ -260,6 +287,7 @@ input[type='text'],
 
 .chat form input {
   flex: 1;
+  min-width: 0;
 }
 
 button[type='submit'] {
@@ -356,6 +384,11 @@ button:disabled {
   gap: 8px;
 }
 
+.ia-senha .linha input {
+  flex: 1;
+  min-width: 0;
+}
+
 .ia-senha input,
 .ia-form input,
 .ia-form select,
@@ -433,8 +466,56 @@ button:disabled {
   background: var(--cor-alerta);
 }
 
-@media (max-width: 720px) {
+/* --- Ajustes para telas pequenas --- */
+@media (max-width: 760px) {
+  .app {
+    padding: 16px 12px 32px;
+  }
+
+  .cabecalho h1 {
+    font-size: 1.4rem;
+  }
+
+  .coluna {
+    padding: 14px;
+  }
+
+  .dados-aluno,
+  .totais {
+    grid-template-columns: 1fr;
+  }
+
+  .ia {
+    padding: 12px;
+  }
+
+  .ia-barra {
+    flex-wrap: wrap;
+  }
+
   .ia-campos {
     grid-template-columns: 1fr;
+  }
+
+  .ia-senha .linha,
+  .ia-form .linha {
+    flex-wrap: wrap;
+  }
+
+  .ia-form .linha button,
+  .ia-senha .linha button {
+    flex: 1 0 100%;
+  }
+
+  .ia-acoes button {
+    flex: 1 1 auto;
+  }
+
+  .chat-mensagens {
+    max-height: 260px;
+  }
+
+  .sugestoes button {
+    flex: 1 1 auto;
   }
 }
