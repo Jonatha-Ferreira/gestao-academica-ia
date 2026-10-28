@@ -16,6 +16,7 @@ interface Props {
 const PRESETS: Array<{ id: string; nome: string; provedor: ProvedorIa; baseUrl: string }> = [
   { id: 'anthropic', nome: 'Anthropic (Claude)', provedor: 'anthropic', baseUrl: 'https://api.anthropic.com/v1' },
   { id: 'openai', nome: 'OpenAI (GPT)', provedor: 'openai', baseUrl: 'https://api.openai.com/v1' },
+  { id: 'commandcode', nome: 'Command Code', provedor: 'openai', baseUrl: 'https://api.commandcode.ai/provider/v1' },
   { id: 'deepseek', nome: 'DeepSeek', provedor: 'openai', baseUrl: 'https://api.deepseek.com/v1' },
   { id: 'groq', nome: 'Groq', provedor: 'openai', baseUrl: 'https://api.groq.com/openai/v1' },
   { id: 'openrouter', nome: 'OpenRouter', provedor: 'openai', baseUrl: 'https://openrouter.ai/api/v1' },

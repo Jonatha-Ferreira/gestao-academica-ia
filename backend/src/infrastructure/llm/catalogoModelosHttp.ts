@@ -125,8 +125,16 @@ export class CatalogoModelosHttp implements CatalogoModelos {
       throw new ProvedorInvalidoError(`A Anthropic respondeu HTTP ${status} ao listar modelos.`);
     }
 
-    const modelos = ((dados as { data?: Array<{ id?: string; display_name?: string }> })?.data ?? [])
+    const modelos = (
+      (dados as { data?: Array<{ id?: string; display_name?: string; supported_endpoints?: string[] }> })
+        ?.data ?? []
+    )
       .filter((modelo) => Boolean(modelo.id))
+      .filter(
+        (modelo) =>
+          !Array.isArray(modelo.supported_endpoints) ||
+          modelo.supported_endpoints.includes('/messages'),
+      )
       .map((modelo) => ({
         id: modelo.id as string,
         nome: modelo.display_name ?? (modelo.id as string),
@@ -161,9 +169,19 @@ export class CatalogoModelosHttp implements CatalogoModelos {
       );
     }
 
-    const ids = (((dados as { data?: Array<{ id?: string }> })?.data) ?? [])
-      .map((modelo) => modelo.id ?? '')
-      .filter((id) => id.length > 0);
+    const itens =
+      (dados as { data?: Array<{ id?: string; supported_endpoints?: string[] }> })?.data ?? [];
+
+    // Alguns gateways informam quais endpoints cada modelo suporta (ex.: Command
+    // Code expõe Claude só em /messages). Filtramos para não oferecer um modelo
+    // que vai falhar no /chat/completions.
+    const compativeis = itens.filter(
+      (modelo) =>
+        !Array.isArray(modelo.supported_endpoints) ||
+        modelo.supported_endpoints.includes('/chat/completions'),
+    );
+
+    const ids = compativeis.map((modelo) => modelo.id ?? '').filter((id) => id.length > 0);
 
     // O catálogo da OpenAI oficial vem "poluído" (embeddings, tts, imagem...).
     // Nos demais provedores compatíveis não filtramos, pois os nomes variam.
