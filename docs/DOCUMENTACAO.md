@@ -236,8 +236,10 @@ Painel "Integrar IA real" (protegido por senha `IA_ADMIN_PASSWORD`):
 
 - **Provedor**: apenas LLMs — Anthropic ou OpenAI (validação na borda por `z.enum` **e** no domínio).
 - **Chave**: validada de verdade chamando `GET /v1/models` do provedor; chave inválida → `400`.
-- **Modelo**: lista carregada **com base na LLM/key** (OpenAI filtra só modelos de chat; Anthropic
-  usa `display_name`), com fallback estático se o provedor não devolver lista.
+- **Modelo (opcional)**: a lista é carregada **com base na LLM/key** (OpenAI filtra só modelos de
+  chat; Anthropic usa `display_name`). **Sem escolha explícita, aplica-se o padrão do provedor** — a
+  linha "flash" mais atualizada (`MODELO_PADRAO`), selecionada preferencialmente a partir da lista
+  **real** devolvida pela API (`escolherModeloPadrao`), com fallback para o alias constante.
 - **Regras**: template pronto, totalmente editável, com "restaurar padrão".
 - **Ações**: salvar, testar (pergunta de amostra) e remover (volta ao demonstrativo).
 

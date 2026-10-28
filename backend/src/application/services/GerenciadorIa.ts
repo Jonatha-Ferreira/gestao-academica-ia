@@ -10,6 +10,7 @@ import {
   StatusIaDTO,
 } from '../dtos/ia.dto';
 import { ProvedorInvalidoError } from '../errors/AppError';
+import { escolherModeloPadrao } from './escolherModeloPadrao';
 
 export interface OpcoesGerenciadorIa {
   repositorio: ConfiguracaoIaRepository;
@@ -69,16 +70,32 @@ export class GerenciadorIa implements ResolvedorProvedorIa {
   }
 
   async salvar(input: SalvarConfiguracaoIaDTO): Promise<StatusIaDTO> {
-    // `ConfiguracaoIa.criar` valida provedor/permissões básicas (só LLMs aceitos).
-    const configuracao = ConfiguracaoIa.criar(input);
-
-    // Valida a chave junto ao provedor e confere se o modelo existe.
-    const modelos = await this.listarModelos(configuracao.provedor, configuracao.apiKey);
-    if (modelos.length > 0 && !modelos.some((modelo) => modelo.id === configuracao.modelo)) {
+    if (!PROVEDORES_IA.includes(input.provedor)) {
       throw new ProvedorInvalidoError(
-        `O modelo "${configuracao.modelo}" não está disponível para o provedor ${configuracao.provedor}.`,
+        `Provedor "${input.provedor}" não suportado. Apenas LLMs: ${PROVEDORES_IA.join(', ')}.`,
       );
     }
+
+    const apiKey = (input.apiKey ?? '').trim();
+    if (!apiKey) {
+      throw new ProvedorInvalidoError('Informe a chave de API do provedor.');
+    }
+
+    // Valida a chave junto ao provedor — e já obtém a lista real de modelos.
+    const modelos = await this.listarModelos(input.provedor, apiKey);
+
+    // Modelo é opcional: sem escolha explícita, usa o padrão "flash" do provedor,
+    // preferindo um modelo que exista de fato na lista devolvida pela API.
+    const modeloInformado = input.modelo?.trim();
+    const modelo = modeloInformado || escolherModeloPadrao(input.provedor, modelos);
+
+    if (modeloInformado && modelos.length > 0 && !modelos.some((m) => m.id === modelo)) {
+      throw new ProvedorInvalidoError(
+        `O modelo "${modelo}" não está disponível para o provedor ${input.provedor}.`,
+      );
+    }
+
+    const configuracao = ConfiguracaoIa.criar({ ...input, apiKey, modelo });
 
     await this.opcoes.repositorio.salvar(configuracao);
     this.configuracao = configuracao;

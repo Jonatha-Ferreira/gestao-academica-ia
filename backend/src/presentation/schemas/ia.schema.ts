@@ -17,7 +17,11 @@ export const salvarIaSchema = z.object({
   senha: z.string().min(1, 'Informe a senha de administração.'),
   provedor: provedorIaSchema,
   apiKey: z.string().min(1, 'Informe a chave de API.'),
-  modelo: z.string().trim().min(1, 'Selecione um modelo.'),
+  modelo: z
+    .string()
+    .trim()
+    .max(120, 'Nome de modelo muito longo.')
+    .optional(),
   promptSistema: z.string().max(8000, 'As regras devem ter no máximo 8000 caracteres.').optional(),
   temperatura: z.number().min(0).max(2).optional(),
   maxTokens: z.number().int().positive().max(8000).optional(),

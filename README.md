@@ -187,8 +187,11 @@ No topo da tela há o painel **“Integrar IA real”**:
 2. **Provedor** — apenas LLMs: **Anthropic (Claude)** ou **OpenAI (GPT)**.
 3. **Chave de API** — validada de verdade: o back-end chama `GET /v1/models` do provedor; chave
    inválida é recusada (`400 PROVEDOR_INVALIDO`).
-4. **Modelo** — o botão **“Carregar modelos”** busca a lista **com base na LLM e na chave**
-   informadas; o campo aceita escolher da lista ou digitar.
+4. **Modelo (opcional)** — o botão **“Carregar modelos”** busca a lista **com base na LLM e na
+   chave** informadas; o campo aceita escolher da lista ou digitar. **Se ficar vazio, o sistema usa o
+   modelo padrão do provedor** — a linha “flash” mais atualizada (`claude-3-5-haiku-latest` na
+   Anthropic, `gpt-4o-mini` na OpenAI) —, escolhido preferencialmente a partir da lista real
+   devolvida pela API.
 5. **Regras (prompt de sistema)** — já vem com um **template pronto** e é totalmente editável
    (“Restaurar regras padrão” devolve o template). Isso permite definir o comportamento do
    assistente como você quiser.

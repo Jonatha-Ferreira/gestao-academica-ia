@@ -74,11 +74,6 @@ export function ConfiguracaoIa({ status, onAtualizarStatus }: Props) {
   }
 
   async function carregarModelos() {
-    if (!apiKey.trim()) {
-      setMensagem(null);
-      setErro('Informe a chave de API do provedor para carregar os modelos.');
-      return;
-    }
     setErro(null);
     setMensagem(null);
     setOcupado(true);
@@ -104,7 +99,7 @@ export function ConfiguracaoIa({ status, onAtualizarStatus }: Props) {
       const novoStatus = await api.ia.salvar(senha, {
         provedor,
         apiKey,
-        modelo,
+        modelo: modelo.trim() || undefined,
         promptSistema,
         temperatura,
         maxTokens,
@@ -224,15 +219,15 @@ export function ConfiguracaoIa({ status, onAtualizarStatus }: Props) {
                 </label>
 
                 <label>
-                  Modelo
+                  Modelo (opcional)
                   <div className="linha">
                     <input
                       list="lista-modelos"
                       value={modelo}
                       onChange={(evento) => setModelo(evento.target.value)}
-                      placeholder="Carregue os modelos ou digite"
+                      placeholder="Se vazio, usa o padrão do provedor"
                     />
-                    <button type="button" onClick={carregarModelos} disabled={ocupado}>
+                    <button type="button" onClick={carregarModelos} disabled={ocupado || !apiKey.trim()}>
                       Carregar modelos
                     </button>
                   </div>
@@ -281,7 +276,7 @@ export function ConfiguracaoIa({ status, onAtualizarStatus }: Props) {
               </label>
 
               <div className="ia-acoes">
-                <button type="button" onClick={salvar} disabled={ocupado || !apiKey || !modelo}>
+                <button type="button" onClick={salvar} disabled={ocupado || !apiKey.trim()}>
                   Salvar integração
                 </button>
                 <button type="button" className="secundario" onClick={testar} disabled={ocupado}>
@@ -304,15 +299,14 @@ export function ConfiguracaoIa({ status, onAtualizarStatus }: Props) {
                 </button>
               </div>
 
-              {(!apiKey.trim() || !modelo.trim()) && (
+              {!apiKey.trim() ? (
+                <p className="ia-nota">Informe a chave de API para salvar a integração.</p>
+              ) : !modelo.trim() ? (
                 <p className="ia-nota">
-                  {!apiKey.trim() && !modelo.trim()
-                    ? 'Informe a chave de API e escolha um modelo para salvar a integração.'
-                    : !apiKey.trim()
-                      ? 'Informe a chave de API para salvar a integração.'
-                      : 'Escolha (ou digite) um modelo para salvar a integração.'}
+                  Sem modelo selecionado, será usado o padrão do provedor (linha rápida/barata mais
+                  atualizada).
                 </p>
-              )}
+              ) : null}
 
               {mensagem && <p className="feedback sucesso">{mensagem}</p>}
               {erro && <p className="feedback erro">{erro}</p>}

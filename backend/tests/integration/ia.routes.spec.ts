@@ -158,6 +158,21 @@ describe('PUT /api/ia/configuracao', () => {
     expect(assistente.body.dados.resposta).toContain('simulada');
   });
 
+  it('salva sem informar modelo e aplica o padrão do provedor', async () => {
+    const app = criarApp();
+
+    const resposta = await request(app).put('/api/ia/configuracao').send({
+      senha: SENHA,
+      provedor: 'anthropic',
+      apiKey: 'sk-ant-123',
+    });
+
+    expect(resposta.status).toBe(200);
+    expect(resposta.body.dados.configurado).toBe(true);
+    // O catálogo fake só devolve o sonnet; o seletor de padrão escolhe ele.
+    expect(resposta.body.dados.modelo).toBe('claude-3-5-sonnet-latest');
+  });
+
   it('recusa provedor não suportado', async () => {
     const resposta = await request(criarApp())
       .put('/api/ia/configuracao')

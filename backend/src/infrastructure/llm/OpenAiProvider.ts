@@ -1,6 +1,6 @@
 import { EntradaLlm, LlmProvider, ModoLlm } from '../../application/ports/LlmProvider';
 import { LlmIndisponivelError } from '../../application/errors/AppError';
-import { PROMPT_SISTEMA_PADRAO } from '../../domain/entities/ConfiguracaoIa';
+import { MODELO_PADRAO, PROMPT_SISTEMA_PADRAO } from '../../domain/entities/ConfiguracaoIa';
 import { postJson } from './http';
 import { montarMensagemUsuario, serializarContexto } from './prompts';
 import { OpcoesProvedorIa } from './AnthropicProvider';
@@ -20,7 +20,7 @@ export class OpenAiProvider implements LlmProvider {
   private readonly maxTokens: number;
 
   constructor(private readonly opcoes: OpcoesProvedorIa) {
-    this.modelo = opcoes.modelo?.trim() || 'gpt-4o-mini';
+    this.modelo = opcoes.modelo?.trim() || MODELO_PADRAO.openai;
     this.promptSistema = opcoes.promptSistema?.trim() || PROMPT_SISTEMA_PADRAO;
     this.temperatura = opcoes.temperatura ?? 0.2;
     this.maxTokens = opcoes.maxTokens ?? 1024;

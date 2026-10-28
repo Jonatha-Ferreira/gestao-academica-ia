@@ -1,6 +1,6 @@
 import { EntradaLlm, LlmProvider, ModoLlm } from '../../application/ports/LlmProvider';
 import { LlmIndisponivelError } from '../../application/errors/AppError';
-import { PROMPT_SISTEMA_PADRAO } from '../../domain/entities/ConfiguracaoIa';
+import { MODELO_PADRAO, PROMPT_SISTEMA_PADRAO } from '../../domain/entities/ConfiguracaoIa';
 import { postJson } from './http';
 import { montarMensagemUsuario, serializarContexto } from './prompts';
 
@@ -31,7 +31,7 @@ export class AnthropicProvider implements LlmProvider {
   private readonly maxTokens: number;
 
   constructor(private readonly opcoes: OpcoesProvedorIa) {
-    this.modelo = opcoes.modelo?.trim() || 'claude-3-5-sonnet-latest';
+    this.modelo = opcoes.modelo?.trim() || MODELO_PADRAO.anthropic;
     this.promptSistema = opcoes.promptSistema?.trim() || PROMPT_SISTEMA_PADRAO;
     // A Anthropic aceita temperatura entre 0 e 1.
     this.temperatura = Math.min(Math.max(opcoes.temperatura ?? 0.2, 0), 1);

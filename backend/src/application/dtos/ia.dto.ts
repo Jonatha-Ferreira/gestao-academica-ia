@@ -27,7 +27,8 @@ export interface ConfiguracaoIaPublicaDTO {
 export interface SalvarConfiguracaoIaDTO {
   provedor: ProvedorIa;
   apiKey: string;
-  modelo: string;
+  /** Opcional: sem ele, usa o modelo padrão do provedor. */
+  modelo?: string;
   promptSistema?: string;
   temperatura?: number;
   maxTokens?: number;

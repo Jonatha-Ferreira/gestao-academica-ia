@@ -74,7 +74,8 @@ export interface ConfiguracaoIaPublica {
 export interface SalvarConfiguracaoIa {
   provedor: ProvedorIa;
   apiKey: string;
-  modelo: string;
+  /** Opcional: sem ele, o back-end usa o modelo padrão do provedor. */
+  modelo?: string;
   promptSistema?: string;
   temperatura?: number;
   maxTokens?: number;

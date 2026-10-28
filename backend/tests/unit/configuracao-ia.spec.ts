@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { ConfiguracaoIa, PROMPT_SISTEMA_PADRAO } from '../../src/domain/entities/ConfiguracaoIa';
+import { ConfiguracaoIa, MODELO_PADRAO, PROMPT_SISTEMA_PADRAO } from '../../src/domain/entities/ConfiguracaoIa';
 import { DomainError } from '../../src/domain/errors/DomainError';
 
 function base(overrides: Partial<Parameters<typeof ConfiguracaoIa.criar>[0]> = {}) {
@@ -20,8 +20,12 @@ describe('ConfiguracaoIa', () => {
     expect(() => ConfiguracaoIa.criar(base({ apiKey: '   ' }))).toThrow(DomainError);
   });
 
-  it('exige um modelo', () => {
-    expect(() => ConfiguracaoIa.criar(base({ modelo: '' }))).toThrow(DomainError);
+  it('usa o modelo padrão do provedor quando o modelo não é informado', () => {
+    const anthropic = ConfiguracaoIa.criar({ provedor: 'anthropic', apiKey: 'sk-ant-123' });
+    expect(anthropic.modelo).toBe(MODELO_PADRAO.anthropic);
+
+    const openai = ConfiguracaoIa.criar({ provedor: 'openai', apiKey: 'sk-openai', modelo: '   ' });
+    expect(openai.modelo).toBe(MODELO_PADRAO.openai);
   });
 
   it('rejeita temperatura fora do intervalo 0..2', () => {

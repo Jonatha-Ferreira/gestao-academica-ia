@@ -6,6 +6,17 @@ export type ProvedorIa = 'anthropic' | 'openai';
 export const PROVEDORES_IA: ReadonlyArray<ProvedorIa> = ['anthropic', 'openai'];
 
 /**
+ * Modelo padrão por provedor: a linha "flash" (rápida/barata) mais atualizada.
+ * Usamos aliases "-latest" sempre que o provedor suporta, para acompanhar a
+ * versão mais recente da linha sem precisar alterar código.
+ * É o fallback quando o usuário não escolhe um modelo na integração.
+ */
+export const MODELO_PADRAO: Record<ProvedorIa, string> = {
+  anthropic: 'claude-3-5-haiku-latest',
+  openai: 'gpt-4o-mini',
+};
+
+/**
  * Template padrão das regras (prompt de sistema) do assistente.
  * Já vem pronto para uso e pode ser totalmente reescrito pela aplicação.
  * O contexto com os dados acadêmicos e a pergunta são anexados automaticamente.
@@ -25,7 +36,8 @@ export const PROMPT_SISTEMA_PADRAO = [
 export interface ConfiguracaoIaInput {
   provedor: ProvedorIa;
   apiKey: string;
-  modelo: string;
+  /** Opcional: sem ele, aplica-se o `MODELO_PADRAO` do provedor. */
+  modelo?: string;
   promptSistema?: string;
   temperatura?: number;
   maxTokens?: number;
@@ -66,9 +78,9 @@ export class ConfiguracaoIa {
     if (!input.apiKey || !input.apiKey.trim()) {
       throw new DomainError('Informe a chave de API do provedor.');
     }
-    if (!input.modelo || !input.modelo.trim()) {
-      throw new DomainError('Selecione um modelo de LLM.');
-    }
+
+    // Modelo é opcional: sem escolha explícita, usa o padrão "flash" do provedor.
+    const modelo = input.modelo?.trim() || MODELO_PADRAO[input.provedor];
 
     const temperatura = input.temperatura ?? 0.2;
     if (Number.isNaN(temperatura) || temperatura < 0 || temperatura > 2) {
@@ -87,7 +99,7 @@ export class ConfiguracaoIa {
     return new ConfiguracaoIa({
       provedor: input.provedor,
       apiKey: input.apiKey.trim(),
-      modelo: input.modelo.trim(),
+      modelo,
       promptSistema,
       temperatura,
       maxTokens,
