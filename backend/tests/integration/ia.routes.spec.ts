@@ -62,7 +62,7 @@ function criarApp(opcoes: OpcoesApp = {}): Express {
 const configuracaoValida = {
   senha: SENHA,
   provedor: 'anthropic',
-  apiKey: 'sk-ant-123',
+  apiKey: 'chave-de-teste-anthropic',
   modelo: 'claude-3-5-sonnet-latest',
   promptSistema: 'Responda apenas o que está nos dados.',
   temperatura: 0.1,
@@ -112,7 +112,7 @@ describe('POST /api/ia/modelos', () => {
   it('lista os modelos do provedor com a chave informada', async () => {
     const resposta = await request(criarApp())
       .post('/api/ia/modelos')
-      .send({ senha: SENHA, provedor: 'anthropic', apiKey: 'sk-ant-123' });
+      .send({ senha: SENHA, provedor: 'anthropic', apiKey: 'chave-de-teste-anthropic' });
 
     expect(resposta.status).toBe(200);
     expect(resposta.body.dados[0].id).toBe('claude-3-5-sonnet-latest');
@@ -164,7 +164,7 @@ describe('PUT /api/ia/configuracao', () => {
     const resposta = await request(app).put('/api/ia/configuracao').send({
       senha: SENHA,
       provedor: 'anthropic',
-      apiKey: 'sk-ant-123',
+      apiKey: 'chave-de-teste-anthropic',
     });
 
     expect(resposta.status).toBe(200);

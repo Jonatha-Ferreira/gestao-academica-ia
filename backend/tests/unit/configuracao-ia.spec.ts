@@ -5,7 +5,7 @@ import { DomainError } from '../../src/domain/errors/DomainError';
 function base(overrides: Partial<Parameters<typeof ConfiguracaoIa.criar>[0]> = {}) {
   return {
     provedor: 'anthropic' as const,
-    apiKey: 'sk-ant-123',
+    apiKey: 'chave-de-teste-anthropic',
     modelo: 'claude-3-5-sonnet-latest',
     ...overrides,
   };
@@ -21,10 +21,10 @@ describe('ConfiguracaoIa', () => {
   });
 
   it('usa o modelo padrão do provedor quando o modelo não é informado', () => {
-    const anthropic = ConfiguracaoIa.criar({ provedor: 'anthropic', apiKey: 'sk-ant-123' });
+    const anthropic = ConfiguracaoIa.criar({ provedor: 'anthropic', apiKey: 'chave-de-teste-anthropic' });
     expect(anthropic.modelo).toBe(MODELO_PADRAO.anthropic);
 
-    const openai = ConfiguracaoIa.criar({ provedor: 'openai', apiKey: 'sk-openai', modelo: '   ' });
+    const openai = ConfiguracaoIa.criar({ provedor: 'openai', apiKey: 'chave-de-teste-openai', modelo: '   ' });
     expect(openai.modelo).toBe(MODELO_PADRAO.openai);
   });
 
@@ -41,6 +41,6 @@ describe('ConfiguracaoIa', () => {
   it('não expõe a chave de API na versão pública', () => {
     const config = ConfiguracaoIa.criar(base());
     expect(config.toPublico()).not.toHaveProperty('apiKey');
-    expect(JSON.stringify(config.toPublico())).not.toContain('sk-ant-123');
+    expect(JSON.stringify(config.toPublico())).not.toContain('chave-de-teste-anthropic');
   });
 });
