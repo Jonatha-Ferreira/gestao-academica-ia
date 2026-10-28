@@ -238,7 +238,7 @@ input[type='text'],
   display: flex;
   flex-direction: column;
   gap: 8px;
-  max-height: 320px;
+  max-height: 440px;
   overflow-y: auto;
 }
 
@@ -533,7 +533,7 @@ button:disabled {
   }
 
   .chat-mensagens {
-    max-height: 260px;
+    max-height: 320px;
   }
 
   .sugestoes button {
