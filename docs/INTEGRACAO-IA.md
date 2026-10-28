@@ -13,17 +13,19 @@ para você configurar e testar em poucos minutos.
 
 ```
 Navegador (painel "Integrar IA")
-   │  PUT /api/ia/configuracao { senha, provedor, baseUrl, apiKey, modelo, promptSistema }
+   │  PUT /api/ia/configuracao { senha, provedor, rotulo, baseUrl, apiKey, modelo, promptSistema }
    ▼
 [guarda de senha]  →  IaController  →  GerenciadorIa.salvar
-   1. valida adaptador, URL base (http/https) e chave
+   1. valida adaptador, rótulo, URL base (http/https) e chave
    2. GET {baseUrl}/models com a sua chave   ← valida a chave DE VERDADE
-   3. resolve o modelo (o que você escolheu ou o padrão "flash" da lista real)
+   3. resolve o modelo (o escolhido ou o padrão "flash" da lista real)
    4. persiste em backend/.data/ia-config.json  (fora do Git)
    5. monta o adaptador e o mantém ativo em memória (sem reiniciar)
    ▼
 POST /api/assistente
-   ProcessarAssistenteIA → monta o contexto dos alunos → obtém o provedor ativo → chama a API
+   ProcessarAssistenteIA → monta o contexto → obtém o provedor ativo
+     → exige JSON (resposta + adimplentes/inadimplentes) → valida o contrato
+     → falhou? repete (retry) → devolve texto + listas + metadados
 ```
 
 **Dois adaptadores:**
@@ -36,6 +38,15 @@ POST /api/assistente
 **O que é enviado ao modelo:** apenas um contexto enxuto e já calculado (nome, curso, matrícula,
 status e o financeiro resumido de cada aluno) + as **regras** (prompt de sistema, editável).
 Nada de credenciais, dados pessoais reais ou o código do projeto.
+
+**Como a lista de modelos é obtida:** `GET {baseUrl}/models` com a sua chave.
+
+- Chave recusada (401/403) → a integração **não** é aceita.
+- Se o provedor informa `supported_endpoints`, os modelos são filtrados pelo endpoint do adaptador
+  (`/chat/completions` ou `/messages`) — evita oferecer um modelo que falharia.
+- Se o provedor **não expõe** `/models` (404/405 em JSON), a lista volta **vazia** e você digita o
+  modelo manualmente; a integração não é bloqueada.
+- Se a URL responder **HTML** (site em vez de API), o erro diz exatamente isso.
 
 **Modo real × demonstrativo:** o campo `modo` na resposta diz de onde veio o texto.
 Sem integração configurada, o assistente responde **localmente** (`demonstrativo`), de forma
@@ -89,11 +100,14 @@ para pegar os válidos.
 Resultado esperado do “Testar” (resposta real do modelo):
 
 ```
-Teste OK (openai · modo real): Dos 5 alunos, 3 estão adimplentes (Maria Souza, matrícula 202602;
-Carlos Lima, matrícula 202603, com R$ 620,00 em aberto sem atraso; e Pedro Santos, matrícula 202605)
-e 2 estão inadimplentes (João da Silva, matrícula 202601, com R$ 500,00 em atraso, e Ana Beatriz,
-matrícula 202604, com R$ 960,00 em atraso).
+Teste OK (Assistente virtual · Command Code): Dos 5 alunos, 3 estão adimplentes (Maria Souza,
+matrícula 202602; Carlos Lima, matrícula 202603, com R$ 620,00 em aberto sem atraso; e Pedro Santos,
+matrícula 202605) e 2 estão inadimplentes (João da Silva, matrícula 202601, com R$ 500,00 em atraso,
+e Ana Beatriz, matrícula 202604, com R$ 960,00 em atraso).
 ```
+
+O “Testar” usa o **mesmo pipeline estruturado** da conversa: se ele passa, o contrato JSON também
+está sendo respeitado.
 
 > No Command Code, os modelos `claude-*` só aceitam `/messages` (adapter Anthropic). Por isso eles
 > **não aparecem** na lista do adapter OpenAI — a aplicação filtra pelo `supported_endpoints`.
@@ -222,4 +236,5 @@ Todas as respostas de erro seguem o formato `{ "erro": { "codigo", "mensagem", "
 - O prompt de sistema manda responder **apenas** com esses dados e admitir quando não houver
   informação — e é **editável** no painel.
 - Temperatura baixa e limite de tokens.
-- Se a IA falhar, a aplicação responde `503` em vez de quebrar a tela.
+- Se a IA falhar (indisponível/resposta vazia), a aplicação responde `503`; se o modelo insistir em
+  ignorar o contrato JSON, responde `502 IA_RESPOSTA_INVALIDA` — nunca exibe texto não validado.

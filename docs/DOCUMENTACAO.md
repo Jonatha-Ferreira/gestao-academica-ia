@@ -232,22 +232,52 @@ demonstrado.
 
 ### 5.5 Integração de LLM em tempo de execução
 
-Painel "Integrar IA real" (protegido por senha `IA_ADMIN_PASSWORD`):
+Painel "Integrar IA real", protegido pela senha `IA_ADMIN_PASSWORD` (se não definida, `admin`).
 
-- **Provedor**: um **preset** (Anthropic, OpenAI, DeepSeek, Groq, OpenRouter, Cohere/Command,
-  Mistral, Together, Ollama, LM Studio) **ou a URL base livre** de qualquer serviço compatível com a
-  API da OpenAI. O que muda o comportamento é o **adaptador** (`anthropic` | `openai`), validado na
-  borda (`z.enum`) e no domínio; a URL base é validada por `normalizarBaseUrl`.
-- **Chave**: validada de verdade chamando `GET /v1/models` do provedor; chave inválida → `400`.
-- **Modelo (opcional)**: a lista é carregada **com base na LLM/key** (OpenAI filtra só modelos de
-  chat; Anthropic usa `display_name`). **Sem escolha explícita, aplica-se o padrão do provedor** — a
-  linha "flash" mais atualizada (`MODELO_PADRAO`), selecionada preferencialmente a partir da lista
-  **real** devolvida pela API (`escolherModeloPadrao`), com fallback para o alias constante.
-- **Regras**: template pronto, totalmente editável, com "restaurar padrão".
-- **Ações**: salvar, testar (pergunta de amostra) e remover (volta ao demonstrativo).
+- **Provedor**: um **preset** (Anthropic, OpenAI, **Command Code**, DeepSeek, Groq, OpenRouter,
+  Cohere/Command, Mistral, Together, Ollama, LM Studio) **ou a URL base livre** de qualquer serviço
+  compatível com a API da OpenAI. O preset só preenche `provedor` (adaptador), `baseUrl` e `rotulo`.
+- **Adaptadores**: `anthropic` (API nativa, `POST {baseUrl}/messages`, `x-api-key`) e `openai`
+  (`POST {baseUrl}/chat/completions`, Bearer). Validados na borda (`z.enum`) e no domínio — é o
+  adaptador que muda o comportamento; a URL define o fornecedor.
+- **URL base**: validada por `normalizarBaseUrl` (http/https, sem barra final) e persistida.
+- **Chave**: validada de verdade — `GerenciadorIa.salvar` chama `GET {baseUrl}/models` antes de
+  aceitar; chave recusada → `400 PROVEDOR_INVALIDO`.
+- **Catálogo de modelos**: quando o provedor informa `supported_endpoints`, filtra pelo endpoint do
+  adaptador (`/chat/completions` ou `/messages`), evitando oferecer modelo que falharia; se o
+  provedor não expõe `/models` (404/405 em JSON), devolve lista vazia e o usuário digita o modelo;
+  se a URL responde HTML, o erro explica que não parece uma API.
+- **Modelo (opcional)**: sem escolha, `escolherModeloPadrao` pega a linha "flash" da lista real
+  (`haiku`/`mini`, preferindo `-latest`) e cai para `MODELO_PADRAO`
+  (`claude-3-5-haiku-latest` / `gpt-4o-mini`).
+- **Rótulo** (`rotulo`): nome exibido (ex.: "Command Code"); aparece no badge e nas mensagens.
+- **Regras**: template pronto e editável; o **contrato JSON** fica **fora** delas (não é quebrável
+  pelo usuário).
+- **Ações**: **Salvar** (valida e **substitui** a configuração anterior), **Testar** (usa a
+  configuração **já salva**), **Remover** (volta ao demonstrativo).
 
-Detalhe de arquitetura: quem resolve o provedor a cada requisição é o `GerenciadorIa`
-(implementa `ResolvedorProvedorIa`), então a troca vale **sem reiniciar** o servidor.
+**Arquitetura:** `GerenciadorIa` implementa `ResolvedorProvedorIa` (`obterProvedor` / `obterRotulo`)
+e resolve o provedor **a cada requisição** — a troca vale sem reiniciar. Persistência em
+`infrastructure/database/ArquivoConfiguracaoIaRepository` (`backend/.data/ia-config.json`,
+gitignored). A chave nunca sai em `toPublico()`.
+
+### 5.6 Saída estruturada, retry e idempotência
+
+**Contrato de saída.** O texto do modelo não é exibido direto: ele deve devolver
+`{ resposta, adimplentes[], inadimplentes[] }`. O contrato é anexado por `montarMensagemUsuario`
+(`CONTRATO_SAIDA_JSON`) — fora das regras editáveis. `InterpretadorRespostaJson` valida com Zod
+(tolerando cerca de markdown/texto ao redor) e lança `RespostaInvalidaError` quando não bate.
+
+**Retry.** `responderComSaidaEstruturada` envolve a chamada em `comRetry` (3 tentativas, backoff
+exponencial + jitter). Repete apenas `LlmIndisponivelError` (resposta vazia, `429`, `5xx`, rede) e
+`RespostaInvalidaError`; erros de negócio não são repetidos. Da 2ª tentativa em diante o prompt
+recebe `REFORCO_FORMATO`. Se todas falharem → `502 IA_RESPOSTA_INVALIDA`.
+
+**Idempotência por sessão.** `POST /api/assistente` aceita `Idempotency-Key` + `X-Session-Id`.
+`CacheIdempotenciaMemoria` faz *single-flight*: a primeira execução é compartilhada com chamadas
+concorrentes e com retries da mesma chave — sem segunda chamada ao modelo e sem duplicar a mensagem
+no chat. Falhas não são cacheadas (TTL 5 min, limite de 500 entradas, memória por processo). No
+front, cada mensagem tem um `id` reutilizado no "Tentar novamente", e a bolha é substituída.
 
 ---
 
@@ -415,14 +445,23 @@ self-healing loop do orquestrador (substituído por correção a cada mudança).
 
 Formato: sucesso `{ "dados": ... }`; erro `{ "erro": { "codigo", "mensagem", "detalhes?" } }`.
 
+Observações:
+
+- Rotas marcadas como "senha" aceitam a senha em `x-senha-ia` (header) ou `senha` (corpo).
+- `POST /api/assistente` aceita `Idempotency-Key` + `X-Session-Id` (idempotência por sessão).
+- Resposta do assistente:
+  `{ resposta, adimplentes[], inadimplentes[], provedor, rotulo, modo, geradoEm }`.
+
 ### 12.2 Variáveis de ambiente (`backend/.env`)
 
 ```env
 LLM_PROVIDER=auto            # anthropic | openai | demo | auto
 ANTHROPIC_API_KEY=
 ANTHROPIC_MODEL=claude-3-5-sonnet-latest
+ANTHROPIC_BASE_URL=          # opcional: gateway/proxy da API nativa
 OPENAI_API_KEY=
 OPENAI_MODEL=gpt-4o-mini
+OPENAI_BASE_URL=             # opcional: qualquer endpoint compatível com a OpenAI
 PORT=3333
 CORS_ORIGIN=http://localhost:5173
 IA_ADMIN_PASSWORD=admin      # senha do painel de IA
@@ -433,7 +472,7 @@ IA_ADMIN_PASSWORD=admin      # senha do painel de IA
 | Comando | Ação |
 | --- | --- |
 | `npm run dev:backend` / `dev:frontend` | servidores de desenvolvimento |
-| `npm test` | suíte do back-end (49 testes) |
+| `npm test` | suíte do back-end (84 testes) |
 | `npm run typecheck` | checagem de tipos (back + front) |
 | `npm run build` | compila back-end (`tsc`) e front-end (`vite build`) |
 

@@ -207,6 +207,11 @@ topo mostra o provedor e o modelo ativos. A configuração é persistida localme
 `backend/.data/ia-config.json`, que está **fora do versionamento** (`.gitignore`). A chave nunca é
 devolvida pela API (`GET /api/ia/configuracao` retorna tudo, menos a chave).
 
+O **rótulo** escolhido (ex.: “Command Code”) aparece na interface, e as respostas são **validadas em
+um contrato JSON** (`resposta` + listas de adimplentes/inadimplentes) antes de serem exibidas — com
+**retry** para resposta vazia/fora do formato e **idempotência** (`Idempotency-Key` + `X-Session-Id`)
+para que um retry não duplique mensagens nem chame o modelo duas vezes.
+
 > Segurança: guardar a chave localmente em arquivo serve apenas para este desafio local. Em
 > produção, use um gerenciador de segredos e nunca grave a chave em disco.
 >
