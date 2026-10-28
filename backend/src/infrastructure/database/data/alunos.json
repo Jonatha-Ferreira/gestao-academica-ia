@@ -1,0 +1,159 @@
+[
+  {
+    "id": "1",
+    "nome": "João da Silva",
+    "curso": "Análise e Desenvolvimento de Sistemas",
+    "matricula": "202601",
+    "status": "ativa",
+    "mensalidades": [
+      {
+        "id": "m-202601-07",
+        "competencia": "2026-07",
+        "vencimento": "2026-07-10",
+        "valorEmCentavos": 50000,
+        "pago": true,
+        "dataPagamento": "2026-07-08"
+      },
+      {
+        "id": "m-202601-08",
+        "competencia": "2026-08",
+        "vencimento": "2026-08-10",
+        "valorEmCentavos": 50000,
+        "pago": true,
+        "dataPagamento": "2026-08-09"
+      },
+      {
+        "id": "m-202601-09",
+        "competencia": "2026-09",
+        "vencimento": "2026-09-10",
+        "valorEmCentavos": 50000,
+        "pago": false,
+        "dataPagamento": null
+      }
+    ]
+  },
+  {
+    "id": "2",
+    "nome": "Maria Souza",
+    "curso": "Sistemas de Informação",
+    "matricula": "202602",
+    "status": "ativa",
+    "mensalidades": [
+      {
+        "id": "m-202602-08",
+        "competencia": "2026-08",
+        "vencimento": "2026-08-10",
+        "valorEmCentavos": 55000,
+        "pago": true,
+        "dataPagamento": "2026-08-05"
+      },
+      {
+        "id": "m-202602-09",
+        "competencia": "2026-09",
+        "vencimento": "2026-09-10",
+        "valorEmCentavos": 55000,
+        "pago": true,
+        "dataPagamento": "2026-09-07"
+      },
+      {
+        "id": "m-202602-10",
+        "competencia": "2026-10",
+        "vencimento": "2026-10-10",
+        "valorEmCentavos": 55000,
+        "pago": true,
+        "dataPagamento": "2026-10-10"
+      }
+    ]
+  },
+  {
+    "id": "3",
+    "nome": "Carlos Lima",
+    "curso": "Engenharia de Software",
+    "matricula": "202603",
+    "status": "ativa",
+    "mensalidades": [
+      {
+        "id": "m-202603-09",
+        "competencia": "2026-09",
+        "vencimento": "2026-09-10",
+        "valorEmCentavos": 62000,
+        "pago": true,
+        "dataPagamento": "2026-09-09"
+      },
+      {
+        "id": "m-202603-10",
+        "competencia": "2026-10",
+        "vencimento": "2026-10-10",
+        "valorEmCentavos": 62000,
+        "pago": true,
+        "dataPagamento": "2026-10-09"
+      },
+      {
+        "id": "m-202603-11",
+        "competencia": "2026-11",
+        "vencimento": "2026-11-10",
+        "valorEmCentavos": 62000,
+        "pago": false,
+        "dataPagamento": null
+      }
+    ]
+  },
+  {
+    "id": "4",
+    "nome": "Ana Beatriz",
+    "curso": "Design",
+    "matricula": "202604",
+    "status": "trancada",
+    "mensalidades": [
+      {
+        "id": "m-202604-05",
+        "competencia": "2026-05",
+        "vencimento": "2026-05-10",
+        "valorEmCentavos": 48000,
+        "pago": true,
+        "dataPagamento": "2026-05-10"
+      },
+      {
+        "id": "m-202604-06",
+        "competencia": "2026-06",
+        "vencimento": "2026-06-10",
+        "valorEmCentavos": 48000,
+        "pago": false,
+        "dataPagamento": null
+      },
+      {
+        "id": "m-202604-07",
+        "competencia": "2026-07",
+        "vencimento": "2026-07-10",
+        "valorEmCentavos": 48000,
+        "pago": false,
+        "dataPagamento": null
+      }
+    ]
+  },
+  {
+    "id": "5",
+    "nome": "Pedro Santos",
+    "curso": "Análise e Desenvolvimento de Sistemas",
+    "matricula": "202605",
+    "status": "ativa",
+    "mensalidades": [
+      {
+        "id": "m-202605-09",
+        "competencia": "2026-09",
+        "vencimento": "2026-09-10",
+        "valorEmCentavos": 50000,
+        "pago": true,
+        "dataPagamento": "2026-09-02"
+      },
+      {
+        "id": "m-202605-10",
+        "competencia": "2026-10",
+        "vencimento": "2026-10-10",
+        "valorEmCentavos": 50000,
+        "pago": true,
+        "dataPagamento": "2026-10-08"
+      }
+    ]
+  }
+]

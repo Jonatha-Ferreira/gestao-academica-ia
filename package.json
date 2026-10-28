@@ -1,0 +1,17 @@
+{
+  "name": "gestao-academica-ia",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Desafio prático Codgo.X - Gestão acadêmica com API Node.js, front-end React e assistente via LLM.",
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "dev:backend": "npm run dev --workspace backend",
+    "dev:frontend": "npm run dev --workspace frontend",
+    "build": "npm run build --workspace backend && npm run build --workspace frontend",
+    "test": "npm run test --workspace backend",
+    "typecheck": "npm run typecheck --workspace backend && npm run typecheck --workspace frontend"
+  }
+}
