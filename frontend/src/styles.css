@@ -74,6 +74,9 @@ body {
   border: 1px solid var(--cor-borda);
   border-radius: 12px;
   padding: 16px;
+  /* Permite que o item do grid encolha abaixo do conteúdo (evita rolagem
+     horizontal da página em telas estreitas). */
+  min-width: 0;
 }
 
 .busca {
