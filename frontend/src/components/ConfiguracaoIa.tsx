@@ -343,7 +343,12 @@ export function ConfiguracaoIa({ status, onAtualizarStatus }: Props) {
                 <button type="button" onClick={salvar} disabled={ocupado || !podeCarregar}>
                   Salvar integração
                 </button>
-                <button type="button" className="secundario" onClick={testar} disabled={ocupado}>
+                <button
+                  type="button"
+                  className="secundario"
+                  onClick={testar}
+                  disabled={ocupado || !status?.configurado}
+                >
                   Testar
                 </button>
                 <button
@@ -362,6 +367,11 @@ export function ConfiguracaoIa({ status, onAtualizarStatus }: Props) {
                   Remover integração
                 </button>
               </div>
+
+              <p className="ia-nota">
+                “Testar” usa a integração <strong>já salva</strong> — clique em “Salvar integração”
+                antes de testar.
+              </p>
 
               {!podeCarregar ? (
                 <p className="ia-nota">Informe a chave de API para salvar a integração.</p>
