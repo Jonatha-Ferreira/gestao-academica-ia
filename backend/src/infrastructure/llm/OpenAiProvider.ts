@@ -1,7 +1,9 @@
 import { EntradaLlm, LlmProvider, ModoLlm } from '../../application/ports/LlmProvider';
 import { LlmIndisponivelError } from '../../application/errors/AppError';
+import { PROMPT_SISTEMA_PADRAO } from '../../domain/entities/ConfiguracaoIa';
 import { postJson } from './http';
-import { SYSTEM_PROMPT_ASSISTENTE, montarMensagemUsuario, serializarContexto } from './prompts';
+import { montarMensagemUsuario, serializarContexto } from './prompts';
+import { OpcoesProvedorIa } from './AnthropicProvider';
 
 interface RespostaOpenAi {
   choices?: Array<{ message?: { content?: string } }>;
@@ -12,20 +14,28 @@ export class OpenAiProvider implements LlmProvider {
   readonly nome = 'openai';
   readonly modo: ModoLlm = 'real';
 
-  constructor(
-    private readonly apiKey: string,
-    private readonly model = 'gpt-4o-mini',
-  ) {}
+  private readonly modelo: string;
+  private readonly promptSistema: string;
+  private readonly temperatura: number;
+  private readonly maxTokens: number;
+
+  constructor(private readonly opcoes: OpcoesProvedorIa) {
+    this.modelo = opcoes.modelo?.trim() || 'gpt-4o-mini';
+    this.promptSistema = opcoes.promptSistema?.trim() || PROMPT_SISTEMA_PADRAO;
+    this.temperatura = opcoes.temperatura ?? 0.2;
+    this.maxTokens = opcoes.maxTokens ?? 1024;
+  }
 
   async responder({ pergunta, contexto }: EntradaLlm): Promise<string> {
     const dados = await postJson<RespostaOpenAi>(
       'https://api.openai.com/v1/chat/completions',
-      { authorization: `Bearer ${this.apiKey}` },
+      { authorization: `Bearer ${this.opcoes.apiKey}` },
       {
-        model: this.model,
-        temperature: 0.2,
+        model: this.modelo,
+        temperature: this.temperatura,
+        max_tokens: this.maxTokens,
         messages: [
-          { role: 'system', content: SYSTEM_PROMPT_ASSISTENTE },
+          { role: 'system', content: this.promptSistema },
           { role: 'user', content: montarMensagemUsuario(pergunta, serializarContexto(contexto)) },
         ],
       },

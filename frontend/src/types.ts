@@ -1,6 +1,7 @@
 export type SituacaoFinanceira = 'adimplente' | 'inadimplente';
 export type SituacaoParcela = 'paga' | 'aberta' | 'atrasada';
 export type ModoLlm = 'real' | 'demonstrativo';
+export type ProvedorIa = 'anthropic' | 'openai';
 
 export interface AlunoResumo {
   id: string;
@@ -45,4 +46,43 @@ export interface RespostaAssistente {
   provedor: string;
   modo: ModoLlm;
   geradoEm: string;
+}
+
+export interface StatusIa {
+  configurado: boolean;
+  modo: ModoLlm;
+  provedor: string;
+  modelo: string | null;
+  atualizadoEm: string | null;
+  promptPadrao: string;
+}
+
+export interface ModeloIa {
+  id: string;
+  nome: string;
+}
+
+export interface ConfiguracaoIaPublica {
+  provedor: ProvedorIa;
+  modelo: string;
+  promptSistema: string;
+  temperatura: number;
+  maxTokens: number;
+  atualizadoEm: string;
+}
+
+export interface SalvarConfiguracaoIa {
+  provedor: ProvedorIa;
+  apiKey: string;
+  modelo: string;
+  promptSistema?: string;
+  temperatura?: number;
+  maxTokens?: number;
+}
+
+export interface TesteIa {
+  ok: boolean;
+  provedor: string;
+  modo: ModoLlm;
+  resposta: string;
 }

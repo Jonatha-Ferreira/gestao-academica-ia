@@ -1,10 +1,12 @@
 import { LlmProvider } from '../../application/ports/LlmProvider';
+import { PROMPT_SISTEMA_PADRAO } from '../../domain/entities/ConfiguracaoIa';
 import { AnthropicProvider } from './AnthropicProvider';
 import { OpenAiProvider } from './OpenAiProvider';
 import { DemoProvider } from './DemoProvider';
 
 /**
- * Seleção do provedor de IA a partir das variáveis de ambiente.
+ * Provedor padrão (fallback) definido por variáveis de ambiente, usado enquanto
+ * nenhuma integração real for configurada pela aplicação.
  *
  *   LLM_PROVIDER=anthropic -> exige ANTHROPIC_API_KEY
  *   LLM_PROVIDER=openai    -> exige OPENAI_API_KEY
@@ -20,14 +22,22 @@ export function createLlmProvider(env: NodeJS.ProcessEnv = process.env): LlmProv
     if (!anthropicKey) {
       throw new Error('LLM_PROVIDER=anthropic requer ANTHROPIC_API_KEY definida.');
     }
-    return new AnthropicProvider(anthropicKey, env.ANTHROPIC_MODEL || undefined);
+    return new AnthropicProvider({
+      apiKey: anthropicKey,
+      modelo: env.ANTHROPIC_MODEL,
+      promptSistema: PROMPT_SISTEMA_PADRAO,
+    });
   }
 
   if (desejado === 'openai') {
     if (!openAiKey) {
       throw new Error('LLM_PROVIDER=openai requer OPENAI_API_KEY definida.');
     }
-    return new OpenAiProvider(openAiKey, env.OPENAI_MODEL || undefined);
+    return new OpenAiProvider({
+      apiKey: openAiKey,
+      modelo: env.OPENAI_MODEL,
+      promptSistema: PROMPT_SISTEMA_PADRAO,
+    });
   }
 
   if (desejado === 'demo') {
@@ -35,10 +45,18 @@ export function createLlmProvider(env: NodeJS.ProcessEnv = process.env): LlmProv
   }
 
   if (anthropicKey) {
-    return new AnthropicProvider(anthropicKey, env.ANTHROPIC_MODEL || undefined);
+    return new AnthropicProvider({
+      apiKey: anthropicKey,
+      modelo: env.ANTHROPIC_MODEL,
+      promptSistema: PROMPT_SISTEMA_PADRAO,
+    });
   }
   if (openAiKey) {
-    return new OpenAiProvider(openAiKey, env.OPENAI_MODEL || undefined);
+    return new OpenAiProvider({
+      apiKey: openAiKey,
+      modelo: env.OPENAI_MODEL,
+      promptSistema: PROMPT_SISTEMA_PADRAO,
+    });
   }
   return new DemoProvider();
 }

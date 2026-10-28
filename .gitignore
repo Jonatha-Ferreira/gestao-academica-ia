@@ -7,6 +7,12 @@ coverage/
 .env.local
 .env.*.local
 
+# Configuração local de IA (contém a chave de API em texto puro — nunca versionar)
+.data/
+
+# Metadados da ferramenta de IA (preferências locais, não fazem parte do projeto)
+.commandcode/
+
 *.log
 npm-debug.log*
 yarn-debug.log*

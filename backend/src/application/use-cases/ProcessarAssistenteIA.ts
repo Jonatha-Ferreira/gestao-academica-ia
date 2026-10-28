@@ -1,6 +1,6 @@
 import { AlunoRepository } from '../../domain/repositories/AlunoRepository';
 import { Clock } from '../ports/Clock';
-import { LlmProvider } from '../ports/LlmProvider';
+import { ResolvedorProvedorIa } from '../ports/ResolvedorProvedorIa';
 import { construirContextoAcademico } from '../services/construirContextoAcademico';
 import { ProcessarAssistenteInput, RespostaAssistenteDTO } from '../dtos/assistente.dto';
 import { NotFoundError } from '../errors/AppError';
@@ -10,17 +10,14 @@ import { NotFoundError } from '../errors/AppError';
  *
  * Responsabilidades:
  *  1. reunir apenas os dados acadêmicos necessários (contexto);
- *  2. delegar a geração da resposta ao provedor de LLM configurado;
+ *  2. resolver, em tempo de execução, qual provedor de LLM está ativo;
  *  3. devolver a resposta com metadados (provedor/modo) para transparência.
- *
- * O modo demonstrativo (sem chave de API) é apenas mais um `LlmProvider`, então
- * o caso de uso não precisa saber qual está em uso.
  */
 export class ProcessarAssistenteIA {
   constructor(
     private readonly alunos: AlunoRepository,
     private readonly clock: Clock,
-    private readonly llm: LlmProvider,
+    private readonly ia: ResolvedorProvedorIa,
   ) {}
 
   async executar(input: ProcessarAssistenteInput): Promise<RespostaAssistenteDTO> {
@@ -39,12 +36,13 @@ export class ProcessarAssistenteIA {
     }
 
     const contexto = construirContextoAcademico(alunos, dataReferencia);
-    const resposta = await this.llm.responder({ pergunta, contexto });
+    const provedor = await this.ia.obterProvedor();
+    const resposta = await provedor.responder({ pergunta, contexto });
 
     return {
       resposta,
-      provedor: this.llm.nome,
-      modo: this.llm.modo,
+      provedor: provedor.nome,
+      modo: provedor.modo,
       geradoEm: new Date().toISOString(),
     };
   }

@@ -25,6 +25,7 @@ Desafio prático — Desenvolvedor Full Stack (Codgo.X).
 | Testes automatizados da regra financeira + integração | **Implementado** |
 | Adaptadores Anthropic/OpenAI (chamada HTTP real, timeouts, erros) | **Implementado** |
 | Assistente de IA respondendo de verdade | **Depende de chave**. Sem chave, roda em **modo demonstrativo** (respostas locais determinísticas). A API informa no campo `modo` se a resposta é `real` ou `demonstrativo`. |
+| Integração de LLM configurável **em tempo de execução** (painel na tela, protegido por senha) | **Implementado** |
 
 O **modo demonstrativo não é um “fake” de tela**: ele usa exatamente o mesmo contexto que seria
 enviado ao modelo real e responde a partir dele, sem inventar dados. É o comportamento descrito no
@@ -108,11 +109,15 @@ OPENAI_API_KEY=              # opcional
 OPENAI_MODEL=gpt-4o-mini
 PORT=3333
 CORS_ORIGIN=http://localhost:5173
+IA_ADMIN_PASSWORD=troque-esta-senha   # senha do painel de integração de IA
 ```
 
 Sem nenhuma chave e com `LLM_PROVIDER` ausente/`auto`, o sistema cai automaticamente no **modo
 demonstrativo**. O front-end lê `VITE_API_URL` (ver `frontend/.env.example`); em desenvolvimento,
 deixe vazio para usar o proxy.
+
+> A variável `IA_ADMIN_PASSWORD` protege o painel de integração de IA em tempo de execução
+> (seção 6). Se não for definida, o padrão é `admin` — **troque em qualquer ambiente real**.
 
 ---
 
@@ -124,6 +129,13 @@ deixe vazio para usar o proxy.
 | GET | `/api/alunos/:id` | Detalhe do aluno + financeiro. |
 | GET | `/api/alunos/:id/financeiro` | Situação financeira resumida. |
 | POST | `/api/assistente` | Pergunta ao assistente de IA. Corpo: `{ "pergunta": "...", "alunoId?": "..." }`. |
+| GET | `/api/ia/status` | Estado da integração de IA (público; nunca expõe a chave). |
+| POST | `/api/ia/autenticar` | Valida a senha de administração. |
+| GET | `/api/ia/configuracao` | Configuração atual **sem a chave** (protegido por senha). |
+| PUT | `/api/ia/configuracao` | Valida e salva a integração (protegido por senha). |
+| DELETE | `/api/ia/configuracao` | Remove a integração e volta ao modo demonstrativo (protegido). |
+| POST | `/api/ia/modelos` | Lista os modelos do provedor usando a chave informada (protegido). |
+| POST | `/api/ia/testar` | Envia uma pergunta de amostra pelo provedor ativo (protegido). |
 
 Respostas de sucesso seguem `{ "dados": ... }`. Erros seguem
 `{ "erro": { "codigo": "...", "mensagem": "..." } }` com o status HTTP adequado
@@ -162,6 +174,31 @@ chave. Nenhuma chave é exposta ao front-end: o navegador só fala com a nossa A
    dizer quando a informação não está disponível.
 3. `temperature` baixa (OpenAI) e limite de tokens.
 4. Falhas/rede/timeout são normalizadas em `LlmIndisponivelError` → **HTTP 503**, sem quebrar a app.
+
+### Integração de LLM em tempo de execução (painel na própria aplicação)
+
+Além do `.env`, é possível **integrar uma LLM real direto pela interface**, sem reiniciar a API.
+No topo da tela há o painel **“Integrar IA real”**:
+
+1. **Senha de administração** (`IA_ADMIN_PASSWORD`) — a integração mexe com comunicação externa,
+   então só é liberada após informar a senha correta.
+2. **Provedor** — apenas LLMs: **Anthropic (Claude)** ou **OpenAI (GPT)**.
+3. **Chave de API** — validada de verdade: o back-end chama `GET /v1/models` do provedor; chave
+   inválida é recusada (`400 PROVEDOR_INVALIDO`).
+4. **Modelo** — o botão **“Carregar modelos”** busca a lista **com base na LLM e na chave**
+   informadas; o campo aceita escolher da lista ou digitar.
+5. **Regras (prompt de sistema)** — já vem com um **template pronto** e é totalmente editável
+   (“Restaurar regras padrão” devolve o template). Isso permite definir o comportamento do
+   assistente como você quiser.
+6. **Temperatura / máx. tokens** e botões **Salvar**, **Testar** e **Remover integração**.
+
+Enquanto uma integração estiver salva, o assistente responde de fato (`modo: "real"`); o badge no
+topo mostra o provedor e o modelo ativos. A configuração é persistida localmente em
+`backend/.data/ia-config.json`, que está **fora do versionamento** (`.gitignore`). A chave nunca é
+devolvida pela API (`GET /api/ia/configuracao` retorna tudo, menos a chave).
+
+> Segurança: guardar a chave localmente em arquivo serve apenas para este desafio local. Em
+> produção, use um gerenciador de segredos e nunca grave a chave em disco.
 
 ---
 
@@ -259,8 +296,10 @@ npm test          # executa tudo
 ## 10. Segurança
 
 - Nenhuma chave de API no repositório: apenas `.env.example`.
+- A configuração local de IA (`backend/.data/`) e o `.env` estão no `.gitignore`.
 - O front-end nunca fala com o provedor de IA — só com a nossa API.
-- `.env` no `.gitignore`.
+- As rotas que mexem com a integração externa (`/api/ia/*`) exigem senha de administração.
+- A chave de API nunca é devolvida pela API (a resposta pública nunca inclui `apiKey`).
 - Erros internos não vazam stack trace para o cliente.
 
 ---

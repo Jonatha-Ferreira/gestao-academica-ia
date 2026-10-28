@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { api } from './services/api';
-import type { AlunoDetalhe, AlunoResumo } from './types';
+import type { AlunoDetalhe, AlunoResumo, StatusIa } from './types';
 import { BuscaAlunos } from './components/BuscaAlunos';
 import { ListaAlunos } from './components/ListaAlunos';
 import { DetalheAluno } from './components/DetalheAluno';
 import { ChatAssistente } from './components/ChatAssistente';
+import { ConfiguracaoIa } from './components/ConfiguracaoIa';
 
 export default function App() {
   const [busca, setBusca] = useState('');
@@ -16,6 +17,19 @@ export default function App() {
   const [detalhe, setDetalhe] = useState<AlunoDetalhe | null>(null);
   const [carregandoDetalhe, setCarregandoDetalhe] = useState(false);
   const [erroDetalhe, setErroDetalhe] = useState<string | null>(null);
+
+  const [statusIa, setStatusIa] = useState<StatusIa | null>(null);
+
+  const atualizarStatusIa = useCallback(() => {
+    api.ia
+      .status()
+      .then(setStatusIa)
+      .catch(() => undefined);
+  }, []);
+
+  useEffect(() => {
+    atualizarStatusIa();
+  }, [atualizarStatusIa]);
 
   useEffect(() => {
     let ativo = true;
@@ -88,6 +102,8 @@ export default function App() {
         <h1>Gestão Acadêmica</h1>
         <p>Consulta de alunos, situação financeira e assistente de IA.</p>
       </header>
+
+      <ConfiguracaoIa status={statusIa} onAtualizarStatus={atualizarStatusIa} />
 
       <main className="layout">
         <section className="coluna">

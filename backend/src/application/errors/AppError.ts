@@ -31,3 +31,17 @@ export class LlmIndisponivelError extends AppError {
     super(message, 503, 'IA_INDISPONIVEL');
   }
 }
+
+/** Senha de administração ausente ou incorreta. */
+export class NaoAutorizadoError extends AppError {
+  constructor(message = 'Senha de administração inválida.') {
+    super(message, 401, 'NAO_AUTORIZADO');
+  }
+}
+
+/** Configuração de provedor inválida (chave/modelo/provedor). */
+export class ProvedorInvalidoError extends AppError {
+  constructor(message: string) {
+    super(message, 400, 'PROVEDOR_INVALIDO');
+  }
+}

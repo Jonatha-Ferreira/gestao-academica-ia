@@ -4,8 +4,11 @@ import { ListarAlunos } from '../application/use-cases/ListarAlunos';
 import { ConsultarAluno } from '../application/use-cases/ConsultarAluno';
 import { ConsultarFinanceiro } from '../application/use-cases/ConsultarFinanceiro';
 import { ProcessarAssistenteIA } from '../application/use-cases/ProcessarAssistenteIA';
+import { TestarIntegracaoIa } from '../application/use-cases/TestarIntegracaoIa';
+import { GerenciadorIa } from '../application/services/GerenciadorIa';
 import { criarAlunosRouter } from './routes/alunos.routes';
 import { criarAssistenteRouter } from './routes/assistente.routes';
+import { criarIaRouter } from './routes/ia.routes';
 import { errorHandler, notFoundHandler } from './middlewares/errorHandler';
 
 export interface AppDependencies {
@@ -13,6 +16,8 @@ export interface AppDependencies {
   consultarAluno: ConsultarAluno;
   consultarFinanceiro: ConsultarFinanceiro;
   processarAssistenteIA: ProcessarAssistenteIA;
+  testarIntegracaoIa: TestarIntegracaoIa;
+  gerenciadorIa: GerenciadorIa;
 }
 
 export interface AppOptions {
@@ -36,6 +41,7 @@ export function createApp(deps: AppDependencies, options: AppOptions = {}): Expr
 
   app.use('/api/alunos', criarAlunosRouter(deps));
   app.use('/api/assistente', criarAssistenteRouter(deps));
+  app.use('/api/ia', criarIaRouter(deps));
 
   app.use(notFoundHandler);
   app.use(errorHandler);
