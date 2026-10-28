@@ -46,7 +46,7 @@ export class AnthropicProvider implements LlmProvider {
     this.maxTokens = opcoes.maxTokens ?? 1024;
   }
 
-  async responder({ pergunta, contexto }: EntradaLlm): Promise<string> {
+  async responder({ pergunta, contexto, reforcarFormato }: EntradaLlm): Promise<string> {
     const dados = await postJson<RespostaAnthropic>(
       `${this.baseUrl}/messages`,
       {
@@ -67,7 +67,11 @@ export class AnthropicProvider implements LlmProvider {
         messages: [
           {
             role: 'user',
-            content: montarMensagemUsuario(pergunta, serializarContexto(contexto)),
+            content: montarMensagemUsuario(
+              pergunta,
+              serializarContexto(contexto),
+              Boolean(reforcarFormato),
+            ),
           },
         ],
       },

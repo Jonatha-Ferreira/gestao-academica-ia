@@ -41,8 +41,18 @@ export interface AlunoDetalhe extends AlunoResumo {
   financeiro: ResumoFinanceiro;
 }
 
+export interface AlunoCitado {
+  nome: string;
+  matricula: string;
+  /** Presente quando o aluno aparece em `inadimplentes` (valor em reais). */
+  valorEmAtraso?: number;
+}
+
 export interface RespostaAssistente {
   resposta: string;
+  /** Lista estruturada validada no back-end — não vem de texto livre. */
+  adimplentes: AlunoCitado[];
+  inadimplentes: AlunoCitado[];
   provedor: string;
   /** Rótulo amigável do provedor (ex.: "Command Code"); null no demonstrativo. */
   rotulo: string | null;

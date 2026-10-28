@@ -45,3 +45,10 @@ export class ProvedorInvalidoError extends AppError {
     super(message, 400, 'PROVEDOR_INVALIDO');
   }
 }
+
+/** A IA respondeu fora do contrato esperado (JSON inválido/incompleto). */
+export class RespostaInvalidaError extends AppError {
+  constructor(message = 'A IA retornou uma resposta fora do formato esperado.') {
+    super(message, 502, 'IA_RESPOSTA_INVALIDA');
+  }
+}

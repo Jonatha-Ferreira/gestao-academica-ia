@@ -66,9 +66,22 @@ export const api = {
     return requisitar<ResumoFinanceiro>(`/api/alunos/${encodeURIComponent(id)}/financeiro`);
   },
 
-  perguntar(pergunta: string, alunoId?: string): Promise<RespostaAssistente> {
+  perguntar(
+    pergunta: string,
+    alunoId?: string,
+    opcoes: { idempotencyKey?: string; sessionId?: string } = {},
+  ): Promise<RespostaAssistente> {
+    const headers: Record<string, string> = {};
+    if (opcoes.idempotencyKey) {
+      headers['idempotency-key'] = opcoes.idempotencyKey;
+    }
+    if (opcoes.sessionId) {
+      headers['x-session-id'] = opcoes.sessionId;
+    }
+
     return requisitar<RespostaAssistente>('/api/assistente', {
       method: 'POST',
+      headers,
       body: JSON.stringify({ pergunta, alunoId }),
     });
   },

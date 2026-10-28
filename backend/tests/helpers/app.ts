@@ -17,6 +17,8 @@ export function criarAppDeTeste(llm: LlmProvider = new DemoProvider()): Express 
     // Repositório em memória: garante que nenhum teste leia um .data/ real.
     configuracaoIaRepository: new MemoriaConfiguracaoIaRepository(),
     senhaIa: SENHA_IA_TESTE,
+    // Sem espera entre retries para os testes rodarem rápido.
+    retry: { tentativas: 3, baseMs: 0 },
   });
   return createApp(container.dependencias);
 }

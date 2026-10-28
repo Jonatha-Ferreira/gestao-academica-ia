@@ -157,12 +157,35 @@ Resposta de sucesso do assistente:
 {
   "dados": {
     "resposta": "...",
+    "adimplentes": [{ "nome": "Maria Souza", "matricula": "202602" }],
+    "inadimplentes": [
+      { "nome": "João da Silva", "matricula": "202601", "valorEmAtraso": 500 },
+      { "nome": "Ana Beatriz", "matricula": "202604", "valorEmAtraso": 960 }
+    ],
     "provedor": "openai",
+    "rotulo": "Command Code",
     "modo": "real",
     "geradoEm": "2026-10-28T22:24:53.000Z"
   }
 }
 ```
+
+**Saída estruturada:** o modelo é obrigado a responder um JSON (`resposta` + as listas). O
+back-end valida o contrato antes de devolver — se vier texto livre ou JSON inválido, ele **repete**
+(com reforço do formato). Se nunca cumprir, responde **`502 IA_RESPOSTA_INVALIDA`** em vez de exibir
+texto não confiável. Por isso as listas são a fonte de verdade da interface.
+
+**Retry e idempotência:** falhas transitórias (resposta vazia, `429`, `5xx`) e respostas fora do
+contrato são repetidas até 3 vezes com backoff exponencial + jitter. Para o retry do cliente não
+duplicar nada, envie:
+
+```bash
+ -H "Idempotency-Key: <uuid-da-mensagem>" \
+ -H "X-Session-Id: <uuid-da-sessao>"
+```
+
+A mesma chave na mesma sessão devolve o **mesmo resultado** (inclusive em chamadas concorrentes),
+sem chamar o modelo de novo.
 
 ---
 

@@ -6,6 +6,7 @@ import { ConsultarFinanceiro } from '../application/use-cases/ConsultarFinanceir
 import { ProcessarAssistenteIA } from '../application/use-cases/ProcessarAssistenteIA';
 import { TestarIntegracaoIa } from '../application/use-cases/TestarIntegracaoIa';
 import { GerenciadorIa } from '../application/services/GerenciadorIa';
+import { CacheIdempotencia } from '../application/ports/CacheIdempotencia';
 import { criarAlunosRouter } from './routes/alunos.routes';
 import { criarAssistenteRouter } from './routes/assistente.routes';
 import { criarIaRouter } from './routes/ia.routes';
@@ -18,6 +19,7 @@ export interface AppDependencies {
   processarAssistenteIA: ProcessarAssistenteIA;
   testarIntegracaoIa: TestarIntegracaoIa;
   gerenciadorIa: GerenciadorIa;
+  cacheIdempotencia: CacheIdempotencia;
 }
 
 export interface AppOptions {

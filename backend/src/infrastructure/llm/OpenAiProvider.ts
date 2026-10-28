@@ -37,7 +37,7 @@ export class OpenAiProvider implements LlmProvider {
     this.maxTokens = opcoes.maxTokens ?? 1024;
   }
 
-  async responder({ pergunta, contexto }: EntradaLlm): Promise<string> {
+  async responder({ pergunta, contexto, reforcarFormato }: EntradaLlm): Promise<string> {
     const dados = await postJson<RespostaOpenAi>(
       `${this.baseUrl}/chat/completions`,
       { authorization: `Bearer ${this.opcoes.apiKey}` },
@@ -47,7 +47,14 @@ export class OpenAiProvider implements LlmProvider {
         max_tokens: this.maxTokens,
         messages: [
           { role: 'system', content: this.promptSistema },
-          { role: 'user', content: montarMensagemUsuario(pergunta, serializarContexto(contexto)) },
+          {
+            role: 'user',
+            content: montarMensagemUsuario(
+              pergunta,
+              serializarContexto(contexto),
+              Boolean(reforcarFormato),
+            ),
+          },
         ],
       },
     );

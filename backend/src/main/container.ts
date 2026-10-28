@@ -2,6 +2,9 @@ import * as path from 'path';
 import { Clock } from '../application/ports/Clock';
 import { LlmProvider } from '../application/ports/LlmProvider';
 import { CatalogoModelos } from '../application/ports/CatalogoModelos';
+import { CacheIdempotencia } from '../application/ports/CacheIdempotencia';
+import { InterpretadorResposta } from '../application/ports/InterpretadorResposta';
+import { OpcoesRetry } from '../application/services/comRetry';
 import { AlunoRepository } from '../domain/repositories/AlunoRepository';
 import { ConfiguracaoIaRepository } from '../domain/repositories/ConfiguracaoIaRepository';
 import { ListarAlunos } from '../application/use-cases/ListarAlunos';
@@ -16,7 +19,12 @@ import { ArquivoConfiguracaoIaRepository } from '../infrastructure/database/Arqu
 import { createLlmProvider } from '../infrastructure/llm/createLlmProvider';
 import { CatalogoModelosHttp } from '../infrastructure/llm/catalogoModelosHttp';
 import { montarProvedorIa } from '../infrastructure/llm/montarProvedorIa';
+import { InterpretadorRespostaJson } from '../infrastructure/llm/interpretadorRespostaJson';
+import { CacheIdempotenciaMemoria } from '../infrastructure/cache/CacheIdempotenciaMemoria';
 import { AppDependencies } from '../presentation/app';
+
+/** Retry padrão da saída estruturada (backoff exponencial + jitter). */
+export const RETRY_PADRAO: OpcoesRetry = { tentativas: 3, baseMs: 400 };
 
 export interface ContainerOverrides {
   clock?: Clock;
@@ -26,6 +34,9 @@ export interface ContainerOverrides {
   configuracaoIaRepository?: ConfiguracaoIaRepository;
   catalogoModelos?: CatalogoModelos;
   senhaIa?: string;
+  interpretador?: InterpretadorResposta;
+  cacheIdempotencia?: CacheIdempotencia;
+  retry?: OpcoesRetry;
 }
 
 export interface Container {
@@ -62,13 +73,30 @@ export function buildContainer(overrides: ContainerOverrides = {}): Container {
   const repository = overrides.repository ?? new InMemoryAlunoRepository();
   const gerenciadorIa = montarGerenciadorIa(overrides);
 
+  const interpretador = overrides.interpretador ?? new InterpretadorRespostaJson();
+  const cacheIdempotencia = overrides.cacheIdempotencia ?? new CacheIdempotenciaMemoria();
+  const retry = overrides.retry ?? RETRY_PADRAO;
+
   const dependencias: AppDependencies = {
     listarAlunos: new ListarAlunos(repository, clock),
     consultarAluno: new ConsultarAluno(repository, clock),
     consultarFinanceiro: new ConsultarFinanceiro(repository, clock),
-    processarAssistenteIA: new ProcessarAssistenteIA(repository, clock, gerenciadorIa),
-    testarIntegracaoIa: new TestarIntegracaoIa(repository, clock, gerenciadorIa),
+    processarAssistenteIA: new ProcessarAssistenteIA(
+      repository,
+      clock,
+      gerenciadorIa,
+      interpretador,
+      retry,
+    ),
+    testarIntegracaoIa: new TestarIntegracaoIa(
+      repository,
+      clock,
+      gerenciadorIa,
+      interpretador,
+      retry,
+    ),
     gerenciadorIa,
+    cacheIdempotencia,
   };
 
   return { dependencias, clock, repository, gerenciadorIa };

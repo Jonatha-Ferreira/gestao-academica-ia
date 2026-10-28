@@ -61,3 +61,107 @@ describe('POST /api/assistente', () => {
     expect(resposta.body.erro.codigo).toBe('IA_INDISPONIVEL');
   });
 });
+
+describe('saída estruturada, retry e idempotência', () => {
+  function provedorQueConta(): { provedor: LlmProvider; chamadas: () => number } {
+    let total = 0;
+    const provedor: LlmProvider = {
+      nome: 'fake',
+      modo: 'real',
+      async responder() {
+        total += 1;
+        return JSON.stringify({ resposta: 'ok', adimplentes: [], inadimplentes: [] });
+      },
+    };
+    return { provedor, chamadas: () => total };
+  }
+
+  it('devolve listas estruturadas validadas, não texto livre', async () => {
+    const resposta = await request(app)
+      .post('/api/assistente')
+      .send({ pergunta: 'Quais alunos estão inadimplentes?' });
+
+    expect(resposta.status).toBe(200);
+    expect(Array.isArray(resposta.body.dados.adimplentes)).toBe(true);
+    expect(resposta.body.dados.inadimplentes.map((a: { matricula: string }) => a.matricula)).toEqual([
+      '202601',
+      '202604',
+    ]);
+  });
+
+  it('não chama o modelo duas vezes com a mesma Idempotency-Key', async () => {
+    const { provedor, chamadas } = provedorQueConta();
+    const appComProvedor = criarAppDeTeste(provedor);
+    const cabecalhos = { 'x-session-id': 'sessao-1', 'idempotency-key': 'msg-1' };
+
+    const primeira = await request(appComProvedor)
+      .post('/api/assistente')
+      .set(cabecalhos)
+      .send({ pergunta: 'oi' });
+    const segunda = await request(appComProvedor)
+      .post('/api/assistente')
+      .set(cabecalhos)
+      .send({ pergunta: 'oi' });
+
+    expect(primeira.status).toBe(200);
+    expect(segunda.status).toBe(200);
+    expect(segunda.body.dados.resposta).toBe(primeira.body.dados.resposta);
+    expect(chamadas()).toBe(1);
+  });
+
+  it('chama o modelo de novo quando a Idempotency-Key muda', async () => {
+    const { provedor, chamadas } = provedorQueConta();
+    const appComProvedor = criarAppDeTeste(provedor);
+
+    await request(appComProvedor)
+      .post('/api/assistente')
+      .set({ 'x-session-id': 's', 'idempotency-key': 'a' })
+      .send({ pergunta: 'oi' });
+    await request(appComProvedor)
+      .post('/api/assistente')
+      .set({ 'x-session-id': 's', 'idempotency-key': 'b' })
+      .send({ pergunta: 'oi' });
+
+    expect(chamadas()).toBe(2);
+  });
+
+  it('faz retry quando o modelo responde fora do contrato', async () => {
+    let chamadas = 0;
+    const provedor: LlmProvider = {
+      nome: 'fake',
+      modo: 'real',
+      async responder() {
+        chamadas += 1;
+        if (chamadas === 1) {
+          return 'texto livre, sem JSON';
+        }
+        return JSON.stringify({ resposta: 'ok', adimplentes: [], inadimplentes: [] });
+      },
+    };
+
+    const resposta = await request(criarAppDeTeste(provedor))
+      .post('/api/assistente')
+      .send({ pergunta: 'oi' });
+
+    expect(resposta.status).toBe(200);
+    expect(resposta.body.dados.resposta).toBe('ok');
+    expect(chamadas).toBe(2);
+  });
+
+  it('devolve 502 quando a IA nunca respeita o contrato', async () => {
+    const provedor: LlmProvider = {
+      nome: 'fake',
+      modo: 'real',
+      async responder() {
+        return 'sempre sem JSON';
+      },
+    };
+
+    const resposta = await request(criarAppDeTeste(provedor))
+      .post('/api/assistente')
+      .send({ pergunta: 'oi' });
+
+    expect(resposta.status).toBe(502);
+    expect(resposta.body.erro.codigo).toBe('IA_RESPOSTA_INVALIDA');
+  });
+});

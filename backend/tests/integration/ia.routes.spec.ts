@@ -34,7 +34,11 @@ class ProvedorFalso implements LlmProvider {
   readonly modo: ModoLlm = 'real';
   constructor(readonly nome = 'anthropic') {}
   async responder(): Promise<string> {
-    return `Resposta simulada do provedor ${this.nome}.`;
+    return JSON.stringify({
+      resposta: `Resposta simulada do provedor ${this.nome}.`,
+      adimplentes: [],
+      inadimplentes: [],
+    });
   }
 }
 
@@ -55,6 +59,7 @@ function criarApp(opcoes: OpcoesApp = {}): Express {
   const container = buildContainer({
     clock: new FixedClock('2026-10-28'),
     gerenciadorIa,
+    retry: { tentativas: 3, baseMs: 0 },
   });
   return createApp(container.dependencias);
 }

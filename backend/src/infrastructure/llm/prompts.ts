@@ -36,9 +36,31 @@ export function serializarContexto(contexto: ContextoAcademico): string {
   return linhas.join('\n').trim();
 }
 
+/**
+ * Contrato de saída imposto a TODOS os provedores. Fica fora das "regras"
+ * editáveis para que o formato seja garantido mesmo se o usuário reescrever o
+ * prompt de sistema.
+ */
+export const CONTRATO_SAIDA_JSON = [
+  '[FORMATO OBRIGATÓRIO]',
+  'Responda SOMENTE com um objeto JSON válido (sem markdown, sem texto fora do JSON), no formato:',
+  '{"resposta":"<resposta em português do Brasil>",',
+  ' "adimplentes":[{"nome":"...","matricula":"..."}],',
+  ' "inadimplentes":[{"nome":"...","matricula":"...","valorEmAtraso":0}]}',
+  'Use [] quando não se aplicar. "valorEmAtraso" é em reais. Não invente dados.',
+].join('\n');
+
+/** Reforço usado no retry, quando a primeira resposta não respeitou o contrato. */
+export const REFORCO_FORMATO =
+  'ATENÇÃO: a resposta anterior não respeitou o formato. Responda APENAS com o objeto JSON, começando em { e terminando em }.';
+
 /** Monta a mensagem do usuário com dados + pergunta + reforço anti-alucinação. */
-export function montarMensagemUsuario(pergunta: string, contextoTexto: string): string {
-  return [
+export function montarMensagemUsuario(
+  pergunta: string,
+  contextoTexto: string,
+  reforcarFormato = false,
+): string {
+  const partes = [
     '[DADOS ACADÊMICOS]',
     contextoTexto,
     '',
@@ -46,5 +68,13 @@ export function montarMensagemUsuario(pergunta: string, contextoTexto: string): 
     pergunta,
     '',
     'Responda usando apenas os dados acima. Não invente informações.',
-  ].join('\n');
+    '',
+    CONTRATO_SAIDA_JSON,
+  ];
+
+  if (reforcarFormato) {
+    partes.push('', REFORCO_FORMATO);
+  }
+
+  return partes.join('\n');
 }

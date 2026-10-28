@@ -258,6 +258,52 @@ input[type='text'],
   font-size: 0.7rem;
 }
 
+/* Bloco estruturado validado (adimplentes/inadimplentes) */
+.estruturado {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--cor-borda);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.estruturado-titulo {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--cor-suave);
+}
+
+.estruturado ul {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.82rem;
+}
+
+/* Falha + ação de retry */
+.falha {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.chat button.secundario {
+  align-self: flex-start;
+  padding: 6px 12px;
+  border: 1px solid var(--cor-borda);
+  border-radius: 8px;
+  background: var(--cor-superficie);
+  color: var(--cor-texto);
+  font: inherit;
+  cursor: pointer;
+}
+
 .mensagem.usuario {
   background: #eef1fb;
   align-self: flex-end;

@@ -5,6 +5,8 @@ export type ModoLlm = 'real' | 'demonstrativo';
 export interface EntradaLlm {
   pergunta: string;
   contexto: ContextoAcademico;
+  /** Pede ao adapter para insistir no formato obrigatório (usado em retry). */
+  reforcarFormato?: boolean;
 }
 
 /**
