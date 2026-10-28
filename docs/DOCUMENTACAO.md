@@ -370,16 +370,24 @@ Comandos: `npm test` · `npm run typecheck` · `npm run build`.
 
 ## 11. Como a IA foi utilizada no desenvolvimento
 
-- Usei um agente de código para **estruturar o projeto**, gerar a primeira versão dos arquivos e,
-  sobretudo, **revisar e corrigir** decisões.
-- **Correção crítica ao material de referência**: um orquestrador proposto (que geraria o projeto
-  via LLM) criava apenas pastas e **um teste trivial que não exercitava a regra real** — ele
-  passaria mesmo com o bug presente, e o "self-healing" estava comentado. Optei por construir a
-  aplicação de verdade, com a regra **testada de fato** contra vencimento/pagamento.
-- **Verificação em vez de confiança**: cada entrega foi validada executando `npm test`,
-  `npm run typecheck`, `npm run build` e chamadas reais aos endpoints; a responsividade foi medida
-  com `agent-browser` (foi assim que apareceu um transbordo de 20 px em 390 px, depois corrigido).
-- Resultado: sou capaz de explicar e defender cada arquivo e cada trade-off.
+Processo em três etapas, detalhado em **[`PROMPTS-IA.md`](./PROMPTS-IA.md)** — que traz o **prompt do
+Gemini verbatim** e a matriz item a item do que foi adotado/adaptado/descartado:
+
+1. **Definição de arquitetura e regras — Gemini.** Prompt de "World-Class Software Architect"
+   ("Deterministic Workflows + Small LLM Calls") gerando um blueprint: pipeline determinístico,
+   princípios (Determinism First, Clean Architecture & DDD, SOLID, TDD, Prompt Caching, segurança),
+   estratégia para legado, pipeline de testes com self-healing e template de saída em 3 seções.
+2. **Refinamento com um agente de código (IDE).** O blueprint já estruturado foi trazido para a IDE e
+   alinhado: **descartei o orquestrador gerador de código** (self-healing comentado e um teste que
+   não exercitava a regra real) e apliquei as **regras arquiteturais** ao produto.
+3. **Verificação.** `npm test` / `npm run typecheck` / `npm run build` a cada entrega + medição real
+   de UI com `agent-browser` (assim apareceu o transbordo de 20 px em 390 px, corrigido depois).
+
+**Do blueprint para o produto:** Clean Architecture/DDD, SOLID com DI por interfaces, validação de DTO
+(Zod), TDD na regra crítica, contexto isolado (<1k tokens) e **prompt caching** (`cache_control` da
+Anthropic). **Conscientemente descartado:** Strangler Fig e characterization testing (não havia
+legado), migrations SQL (sem banco), Task MCP/branch por task, seed com Docker, Playwright E2E e o
+self-healing loop do orquestrador (substituído por correção a cada mudança).
 
 ---
 

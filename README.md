@@ -313,13 +313,21 @@ npm test          # executa tudo
 
 ## 11. Como utilizei ferramentas de IA
 
-- Usei um assistente de código (agente) para **estruturar o projeto**, gerar a primeira versão dos
-  arquivos e, principalmente, **revisar e refatorar** a regra financeira.
-- Ponto de atenção que fiz questão de corrigir no material de referência: o orquestrador proposto
-  criava apenas pastas e **um teste trivial** que não exercitava a regra real — ele passaria mesmo
-  com o bug presente. Aqui a regra é **de fato testada** contra cenários de vencimento/pagamento.
-- Toda a saída foi **validada executando** `npm test`, `npm run typecheck`, `npm run build` e
-  chamadas reais aos endpoints (`curl`/PowerShell). Sou capaz de explicar cada arquivo e decisão.
+Processo em três etapas — com o prompt **verbatim** e a matriz do que foi adotado/adaptado/descartado
+em [`docs/PROMPTS-IA.md`](./docs/PROMPTS-IA.md):
+
+1. **Definição (Gemini):** usei um prompt de arquiteto ("Deterministic Workflows + Small LLM Calls")
+   para gerar o blueprint: pipeline determinístico, Clean Architecture/DDD, SOLID, TDD, Prompt
+   Caching, estratégia para legado, pipeline de testes com self-healing e template de saída.
+2. **Refinamento (agente de código na IDE):** trouxe o blueprint **já estruturado** para a IDE e
+   alinhei escopo/regras. **Descartei o orquestrador gerador de código** — ele criava apenas pastas e
+   um teste trivial que passaria mesmo com o bug presente, com o self-healing comentado. Apliquei as
+   **regras arquiteturais** do blueprint ao produto real.
+3. **Verificação:** `npm test` / `npm run typecheck` / `npm run build` a cada entrega, e medição real
+   de UI com `agent-browser` (foi assim que apareceu um transbordo de 20 px em 390 px, depois
+   corrigido).
+
+Sou capaz de explicar e defender cada arquivo, cada decisão e cada item descartado.
 
 ---
 
@@ -329,6 +337,7 @@ npm test          # executa tudo
 gestao-academica-ia/
 ├── backend/          # API Node.js + TypeScript
 ├── frontend/         # React + Vite
+├── docs/             # DOCUMENTACAO.md e PROMPTS-IA.md
 ├── package.json      # workspace raiz
 └── README.md
 ```
