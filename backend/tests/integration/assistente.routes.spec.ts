@@ -14,6 +14,7 @@ describe('POST /api/assistente', () => {
 
     expect(resposta.status).toBe(200);
     expect(resposta.body.dados.modo).toBe('demonstrativo');
+    expect(resposta.body.dados.rotulo).toBeNull();
     expect(resposta.body.dados.resposta).toContain('João da Silva');
     expect(resposta.body.dados.resposta).toContain('Ana Beatriz');
   });

@@ -44,6 +44,7 @@ export interface SalvarConfiguracaoIaDTO {
 export interface TesteIaDTO {
   ok: boolean;
   provedor: string;
+  rotulo: string | null;
   modo: ModoLlm;
   resposta: string;
 }

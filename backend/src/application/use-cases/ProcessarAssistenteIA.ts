@@ -37,11 +37,13 @@ export class ProcessarAssistenteIA {
 
     const contexto = construirContextoAcademico(alunos, dataReferencia);
     const provedor = await this.ia.obterProvedor();
+    const rotulo = await this.ia.obterRotulo();
     const resposta = await provedor.responder({ pergunta, contexto });
 
     return {
       resposta,
       provedor: provedor.nome,
+      rotulo,
       modo: provedor.modo,
       geradoEm: new Date().toISOString(),
     };

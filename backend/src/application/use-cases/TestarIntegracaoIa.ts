@@ -19,6 +19,7 @@ export class TestarIntegracaoIa {
     const alunos = await this.alunos.listar();
     const contexto = construirContextoAcademico(alunos, this.clock.hojeISO());
     const provedor = await this.ia.obterProvedor();
+    const rotulo = await this.ia.obterRotulo();
 
     const resposta = await provedor.responder({
       pergunta: 'Em uma única frase, resuma a situação financeira geral dos alunos.',
@@ -28,6 +29,7 @@ export class TestarIntegracaoIa {
     return {
       ok: true,
       provedor: provedor.nome,
+      rotulo,
       modo: provedor.modo,
       resposta,
     };

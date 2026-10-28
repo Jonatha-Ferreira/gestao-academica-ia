@@ -256,6 +256,7 @@ describe('POST /api/ia/testar', () => {
     expect(resposta.status).toBe(200);
     expect(resposta.body.dados.ok).toBe(true);
     expect(resposta.body.dados.modo).toBe('real');
+    expect(resposta.body.dados.rotulo).toBe('Anthropic');
     expect(resposta.body.dados.resposta).toContain('simulada');
   });
 });

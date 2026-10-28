@@ -161,7 +161,11 @@ export function ConfiguracaoIa({ status, onAtualizarStatus }: Props) {
     setOcupado(true);
     try {
       const teste = await api.ia.testar(senha);
-      setMensagem(`Teste OK (${teste.provedor} · modo ${teste.modo}): ${teste.resposta}`);
+      const origem =
+        teste.modo === 'real'
+          ? `Assistente virtual · ${teste.rotulo ?? teste.provedor}`
+          : 'Assistente virtual · modo demonstrativo';
+      setMensagem(`Teste OK (${origem}): ${teste.resposta}`);
     } catch (falha) {
       setErro(falha instanceof Error ? falha.message : 'Falha no teste da integração.');
     } finally {

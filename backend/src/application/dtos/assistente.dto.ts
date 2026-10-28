@@ -9,6 +9,8 @@ export interface ProcessarAssistenteInput {
 export interface RespostaAssistenteDTO {
   resposta: string;
   provedor: string;
+  /** Rótulo amigável do provedor (ex.: "Command Code"); null no demonstrativo. */
+  rotulo: string | null;
   modo: ModoLlm;
   geradoEm: string;
 }

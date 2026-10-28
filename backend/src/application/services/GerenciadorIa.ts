@@ -50,6 +50,12 @@ export class GerenciadorIa implements ResolvedorProvedorIa {
     return this.provedorDinamico ?? this.opcoes.provedorFallback;
   }
 
+  /** Rótulo do provedor configurado (ex.: "Command Code"); null no demonstrativo. */
+  async obterRotulo(): Promise<string | null> {
+    await this.garantirCarregado();
+    return this.configuracao?.rotulo ?? null;
+  }
+
   async status(): Promise<StatusIaDTO> {
     const provedor = await this.obterProvedor();
     return {

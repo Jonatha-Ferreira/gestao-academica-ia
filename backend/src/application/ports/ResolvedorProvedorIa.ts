@@ -6,4 +6,9 @@ import { LlmProvider } from './LlmProvider';
  */
 export interface ResolvedorProvedorIa {
   obterProvedor(): Promise<LlmProvider>;
+  /**
+   * Rótulo de exibição do provedor ativo (ex.: "Command Code", "OpenAI").
+   * `null` quando nada está configurado (modo demonstrativo).
+   */
+  obterRotulo(): Promise<string | null>;
 }

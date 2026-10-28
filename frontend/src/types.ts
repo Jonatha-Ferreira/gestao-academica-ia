@@ -44,6 +44,8 @@ export interface AlunoDetalhe extends AlunoResumo {
 export interface RespostaAssistente {
   resposta: string;
   provedor: string;
+  /** Rótulo amigável do provedor (ex.: "Command Code"); null no demonstrativo. */
+  rotulo: string | null;
   modo: ModoLlm;
   geradoEm: string;
 }
@@ -91,6 +93,7 @@ export interface SalvarConfiguracaoIa {
 export interface TesteIa {
   ok: boolean;
   provedor: string;
+  rotulo: string | null;
   modo: ModoLlm;
   resposta: string;
 }

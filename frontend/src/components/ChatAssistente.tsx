@@ -36,12 +36,16 @@ export function ChatAssistente({ alunoSelecionado }: { alunoSelecionado: AlunoDe
     try {
       const alunoId = restringirAoAluno && alunoSelecionado ? alunoSelecionado.id : undefined;
       const resposta = await api.perguntar(limpo, alunoId);
+      const origem =
+        resposta.modo === 'real'
+          ? `Assistente virtual · ${resposta.rotulo ?? resposta.provedor}`
+          : 'Assistente virtual · modo demonstrativo';
       setMensagens((atuais) => [
         ...atuais,
         {
           autor: 'assistente',
           texto: resposta.resposta,
-          meta: `${resposta.provedor} · modo ${resposta.modo}`,
+          meta: origem,
         },
       ]);
     } catch (falha) {
