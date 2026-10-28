@@ -10,6 +10,8 @@ Desafio prático — Desenvolvedor Full Stack (Codgo.X).
 - **IA:** integração real com Anthropic (Claude) ou OpenAI, com **modo demonstrativo local**
   quando não há chave de API configurada.
 - **Testes:** Vitest (unitários da regra financeira + integração das rotas).
+- **Documentação técnica completa:** [`docs/DOCUMENTACAO.md`](./docs/DOCUMENTACAO.md) — arquitetura,
+  padrões, uso de IA (RAG/fine-tuning), boas práticas, segurança e limitações.
 
 ---
 
