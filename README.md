@@ -12,6 +12,8 @@ Desafio prático — Desenvolvedor Full Stack (Codgo.X).
 - **Testes:** Vitest (unitários da regra financeira + integração das rotas).
 - **Documentação técnica completa:** [`docs/DOCUMENTACAO.md`](./docs/DOCUMENTACAO.md) — arquitetura,
   padrões, uso de IA (RAG/fine-tuning), boas práticas, segurança e limitações.
+- **Guia de integração de IA (para usuários):** [`docs/INTEGRACAO-IA.md`](./docs/INTEGRACAO-IA.md) —
+  como funciona por dentro e exemplos prontos para testar (Command Code, OpenAI, Ollama).
 
 ---
 
@@ -207,6 +209,9 @@ devolvida pela API (`GET /api/ia/configuracao` retorna tudo, menos a chave).
 
 > Segurança: guardar a chave localmente em arquivo serve apenas para este desafio local. Em
 > produção, use um gerenciador de segredos e nunca grave a chave em disco.
+>
+> Passo a passo detalhado, exemplos prontos e tabela de erros comuns:
+> [`docs/INTEGRACAO-IA.md`](./docs/INTEGRACAO-IA.md).
 
 ---
 
