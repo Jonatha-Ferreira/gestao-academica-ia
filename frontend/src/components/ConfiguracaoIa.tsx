@@ -144,7 +144,9 @@ export function ConfiguracaoIa({ status, onAtualizarStatus }: Props) {
         temperatura,
         maxTokens,
       });
-      setMensagem(`Integração salva. Modo atual: ${novoStatus.modo}.`);
+      const alvo = novoStatus.rotulo ?? novoStatus.provedor;
+      const modeloSalvo = novoStatus.modelo ? ` · ${novoStatus.modelo}` : '';
+      setMensagem(`Integração salva: ${alvo}${modeloSalvo} (modo ${novoStatus.modo}).`);
       onAtualizarStatus();
     } catch (falha) {
       setErro(falha instanceof Error ? falha.message : 'Falha ao salvar a integração.');

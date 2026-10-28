@@ -48,7 +48,7 @@ function criarApp(opcoes: OpcoesApp = {}): Express {
   const gerenciadorIa = new GerenciadorIa({
     repositorio: new MemoriaConfiguracaoIaRepository(),
     catalogo: opcoes.catalogo ?? new CatalogoFalso(),
-    montarProvedor: () => opcoes.provedorReal ?? new ProvedorFalso(),
+    montarProvedor: (config) => opcoes.provedorReal ?? new ProvedorFalso(config.provedor),
     provedorFallback: opcoes.provedorFallback ?? new DemoProvider(),
     senhaAdmin: SENHA,
   });
@@ -197,6 +197,35 @@ describe('PUT /api/ia/configuracao', () => {
       .send({ senha: SENHA, provedor: 'openai', baseUrl: 'nao-e-url', apiKey: 'chave' });
 
     expect(resposta.status).toBe(400);
+  });
+
+  it('substitui a configuração anterior ao salvar novamente', async () => {
+    const app = criarApp();
+
+    await request(app).put('/api/ia/configuracao').send({
+      senha: SENHA,
+      provedor: 'anthropic',
+      apiKey: 'chave',
+      modelo: 'claude-3-5-sonnet-latest',
+      rotulo: 'Primeira',
+    });
+
+    const segunda = await request(app).put('/api/ia/configuracao').send({
+      senha: SENHA,
+      provedor: 'openai',
+      rotulo: 'Segunda',
+      baseUrl: 'https://api.deepseek.com/v1',
+      apiKey: 'chave',
+    });
+
+    expect(segunda.status).toBe(200);
+    expect(segunda.body.dados.rotulo).toBe('Segunda');
+    expect(segunda.body.dados.provedor).toBe('openai');
+
+    const config = await request(app).get('/api/ia/configuracao').set('x-senha-ia', SENHA);
+    expect(config.body.dados.rotulo).toBe('Segunda');
+    expect(config.body.dados.provedor).toBe('openai');
+    expect(config.body.dados.baseUrl).toBe('https://api.deepseek.com/v1');
   });
 
   it('recusa provedor não suportado', async () => {
