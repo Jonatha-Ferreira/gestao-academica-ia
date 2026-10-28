@@ -74,6 +74,11 @@ export function ConfiguracaoIa({ status, onAtualizarStatus }: Props) {
   }
 
   async function carregarModelos() {
+    if (!apiKey.trim()) {
+      setMensagem(null);
+      setErro('Informe a chave de API do provedor para carregar os modelos.');
+      return;
+    }
     setErro(null);
     setMensagem(null);
     setOcupado(true);
@@ -227,10 +232,11 @@ export function ConfiguracaoIa({ status, onAtualizarStatus }: Props) {
                       onChange={(evento) => setModelo(evento.target.value)}
                       placeholder="Carregue os modelos ou digite"
                     />
-                    <button type="button" onClick={carregarModelos} disabled={ocupado || !apiKey}>
+                    <button type="button" onClick={carregarModelos} disabled={ocupado}>
                       Carregar modelos
                     </button>
                   </div>
+                  <span className="ia-nota">Os modelos são consultados no provedor usando a sua chave.</span>
                   <datalist id="lista-modelos">
                     {modelos.map((item) => (
                       <option key={item.id} value={item.id}>
@@ -297,6 +303,16 @@ export function ConfiguracaoIa({ status, onAtualizarStatus }: Props) {
                   Remover integração
                 </button>
               </div>
+
+              {(!apiKey.trim() || !modelo.trim()) && (
+                <p className="ia-nota">
+                  {!apiKey.trim() && !modelo.trim()
+                    ? 'Informe a chave de API e escolha um modelo para salvar a integração.'
+                    : !apiKey.trim()
+                      ? 'Informe a chave de API para salvar a integração.'
+                      : 'Escolha (ou digite) um modelo para salvar a integração.'}
+                </p>
+              )}
 
               {mensagem && <p className="feedback sucesso">{mensagem}</p>}
               {erro && <p className="feedback erro">{erro}</p>}
