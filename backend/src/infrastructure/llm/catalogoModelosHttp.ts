@@ -47,6 +47,7 @@ export function ehModeloLlmOpenAi(id: string): boolean {
 interface RespostaBusca {
   status: number;
   dados: unknown;
+  pareceHtml: boolean;
 }
 
 /** GET com timeout. Lança somente em falha de rede/timeout. */
@@ -60,19 +61,32 @@ async function obterJson(
   try {
     const resposta = await fetchImpl(url, { method: 'GET', headers, signal: controller.signal });
     const texto = await resposta.text();
+    const contentType = resposta.headers.get('content-type');
+
     let dados: unknown = null;
     try {
       dados = texto ? JSON.parse(texto) : null;
     } catch {
       dados = null;
     }
-    return { status: resposta.status, dados };
+
+    const pareceHtml =
+      (contentType ?? '').toLowerCase().includes('text/html') || texto.trimStart().startsWith('<');
+
+    return { status: resposta.status, dados, pareceHtml };
   } catch (erro) {
     const motivo = erro instanceof Error ? erro.message : String(erro);
     throw new ProvedorInvalidoError(`Não foi possível contatar ${url}: ${motivo}`);
   } finally {
     clearTimeout(timer);
   }
+}
+
+function erroUrlNaoEEApi(url: string, status: number): ProvedorInvalidoError {
+  return new ProvedorInvalidoError(
+    `O endereço ${url} não parece ser uma API de LLM (respondeu HTML, HTTP ${status}). ` +
+      'Confira a URL base — deve ser algo como https://api.provedor.com/v1.',
+  );
 }
 
 /**
@@ -95,12 +109,15 @@ export class CatalogoModelosHttp implements CatalogoModelos {
   }
 
   private async listarAnthropic(base: string, apiKey: string): Promise<ModeloIaDTO[]> {
-    const { status, dados } = await obterJson(
+    const { status, dados, pareceHtml } = await obterJson(
       `${base}/models?limit=100`,
       { 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
       this.fetchImpl,
     );
 
+    if (pareceHtml) {
+      throw erroUrlNaoEEApi(base, status);
+    }
     if (status === 401 || status === 403) {
       throw new ProvedorInvalidoError(`A Anthropic recusou a chave de API (HTTP ${status}).`);
     }
@@ -120,12 +137,15 @@ export class CatalogoModelosHttp implements CatalogoModelos {
 
   private async listarCompativelOpenAi(base: string, apiKey: string): Promise<ModeloIaDTO[]> {
     const ehOpenAiOficial = new URL(base).host === 'api.openai.com';
-    const { status, dados } = await obterJson(
+    const { status, dados, pareceHtml } = await obterJson(
       `${base}/models`,
       { authorization: `Bearer ${apiKey}` },
       this.fetchImpl,
     );
 
+    if (pareceHtml) {
+      throw erroUrlNaoEEApi(base, status);
+    }
     if (status === 401 || status === 403) {
       throw new ProvedorInvalidoError(`O provedor recusou a chave de API (HTTP ${status}).`);
     }
