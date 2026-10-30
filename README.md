@@ -3,7 +3,7 @@
 Aplicação de gestão acadêmica que permite **listar e buscar alunos**, **consultar a situação
 financeira** de cada um e **fazer perguntas a um assistente de IA** sobre os dados fictícios.
 
-Desafio prático — Desenvolvedor Full Stack (Codgo.X).
+Desafio prático — Desenvolvedor Full Stack.
 
 - **Back-end:** Node.js + TypeScript + Express, seguindo Clean Architecture / SOLID.
 - **Front-end:** React.js + TypeScript (Vite).
